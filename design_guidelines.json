@@ -1,0 +1,118 @@
+{
+  "theme": "light",
+  "typography": {
+    "font_family": "Nunito Sans",
+    "headings": {
+      "weight": 800,
+      "color": "#1A1A1A",
+      "style": "tracking-tighter leading-tight"
+    },
+    "labels": {
+      "weight": 700,
+      "transform": "uppercase",
+      "tracking": "tracking-[0.08em]",
+      "size": "text-xs md:text-sm"
+    },
+    "body": {
+      "weight": 400,
+      "color": "#747474"
+    }
+  },
+  "colors": {
+    "primary": "#C7493A",
+    "secondary": "#488A6D",
+    "background_marketing": "#F2F1EE",
+    "background_product": "#FFFFFF",
+    "text_core": "#1A1A1A",
+    "text_muted": "#747474",
+    "border": "#C2C2C2",
+    "status": {
+      "warning": "#FFD475",
+      "success": "#88D8B0",
+      "danger": "#FE7E79"
+    }
+  },
+  "layouts": {
+    "marketing": {
+      "style": "Spacious, editorial Bento grid with negative space",
+      "hero": "Large kinetic text with masked line-by-line reveal. Background #F2F1EE.",
+      "padding": "Generous vertical padding (py-24 to py-32)",
+      "grid": "grid-cols-1 md:grid-cols-12 gap-8"
+    },
+    "product": {
+      "style": "Information-dense, clean white canvas, persistent aspect ratios",
+      "sidebar": "Sticky 220px-wide sidebar",
+      "grid": "Responsive masonry or dense CSS grid (gap-4) for candidate cards",
+      "cards": "Subtle 1px border (#C2C2C2), no heavy shadows. Pill overlays for tags."
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-[#C7493A] text-white rounded-md px-6 py-3 font-bold hover:bg-[#a63d30] transition-colors",
+      "secondary": "bg-[#488A6D] text-white rounded-md px-6 py-3 font-bold hover:bg-[#3b7259] transition-colors"
+    },
+    "cards": {
+      "marketing": "bg-white p-8 rounded-xl shadow-sm border border-[#C2C2C2]/50",
+      "product": "bg-white p-4 rounded-lg border border-[#C2C2C2] hover:shadow-md transition-shadow"
+    },
+    "badges": {
+      "verified": "bg-[#88D8B0]/20 text-[#488A6D] border border-[#88D8B0] uppercase tracking-[0.08em] text-xs font-bold px-2 py-1 rounded"
+    }
+  },
+  "motion": {
+    "scroll": "Lenis smooth scroll for marketing page",
+    "hero_reveal": "Framer motion staggered text reveal (y-axis mask)",
+    "micro_interactions": "Hover states on cards (-translate-y-1), gentle scaling on images"
+  },
+  "media": {
+    "images": [
+      {
+        "url": "https://images.unsplash.com/photo-1758691737605-69a0e78bd193?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzB8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBtb2Rlcm4lMjBvZmZpY2UlMjBwb3J0cmFpdHxlbnwwfHx8fDE3ODc3ODI5MTN8MA&ixlib=rb-4.1.0&q=85",
+        "description": "Talent profile picture 1",
+        "category": "talent_cards"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1752952952773-80378cefc23d?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzB8MHwxfHNlYXJjaHwyfHxwcm9mZXNzaW9uYWwlMjBtb2Rlcm4lMjBvZmZpY2UlMjBwb3J0cmFpdHxlbnwwfHx8fDE3ODc3ODI5MTN8MA&ixlib=rb-4.1.0&q=85",
+        "description": "Talent profile picture 2",
+        "category": "talent_cards"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1542744095-fcf48d80b0fd?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA3MDB8MHwxfHNlYXJjaHwzfHxwcmVtaXVtJTIwY29ycG9yYXRlJTIwdGVhbSUyMGRpc2N1c3Npb258ZW58MHx8fHwxNzg3NzgyOTE0fDA&ixlib=rb-4.1.0&q=85",
+        "description": "Team collaboration / hiring",
+        "category": "marketing_hero_or_employers"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1772987438485-ac832640c8a5?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NTZ8MHwxfHNlYXJjaHw0fHxjYXJlZXIlMjBzdWNjZXNzJTIwcHJvZmVzc2lvbmFsfGVufDB8fHx8MTc4Nzc4MjkxM3ww&ixlib=rb-4.1.0&q=85",
+        "description": "Career success hero image",
+        "category": "marketing_outcomes"
+      }
+    ]
+  },
+  "visual_enhancers": {
+    "marketing": "Subtle noise overlay on the Cream background to make it feel like premium editorial paper. Minimal drop shadows, prefer 1px borders.",
+    "product": "Clear visual hierarchy with tags and badges. Focus on data density without clutter."
+  },
+  "libraries": {
+    "ui": "shadcn/ui primitives",
+    "motion": "framer-motion, @studio-freight/lenis",
+    "charts": "recharts (for Match Intelligence breakdown)",
+    "icons": "lucide-react (professional, un-gamified)"
+  },
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "You MUST NOT apply universal transition. Eg: transition: all. Always add transitions for specific interactive elements.",
+    "You MUST NOT center align the app container, ie do not add .App { text-align: center; } in the css file.",
+    "All interactive and key informational elements MUST include a data-testid attribute.",
+    "Use Shadcn components for complex interactions but heavily customize them to match the ElevateMe brand (Charcoal, Terracotta, Green).",
+    "Marketing pages MUST be built with custom HTML/Tailwind for structural layout (no restrictive Shadcn containers) but use Shadcn for forms/modals.",
+    "Product UI MUST be information-dense and rely on a strict grid with 1px #C2C2C2 borders, skipping heavy shadows.",
+    "DO NOT use pure black (#000000). Use Charcoal #1A1A1A.",
+    "DO NOT use generic blue SaaS gradients or cyberpunk aesthetics.",
+    "Maintain a light theme architecture as requested ('Premium light, editorial').",
+    "Use Sonner for toasts."
+  ],
+  "instructions_to_main_agent": {
+    "marketing_site": "Build a landing page with a kinetic hero ('FIND THE RIGHT TALENT. GET HIRED FASTER.'), an editorial marquee, and numbered manifesto chapters. Use the Cream #F2F1EE background. Add 'Why This Match?' card example.",
+    "product_ui": "Build a Talent Intelligence Dashboard featuring Candidate comparison tables, Shortlists, and Match Intelligence breakdowns with dense, functional UI on a White #FFFFFF background.",
+    "data_testid_convention": "kebab-case, role-based. e.g. data-testid='find-talent-cta'"
+  }
+}
