@@ -36,6 +36,25 @@ def now_iso():
     return datetime.now(timezone.utc).isoformat()
 
 
+async def add_notification(user_id, kind, title, body, link=None):
+    if not user_id:
+        return
+    await db.notifications.insert_one({
+        "id": str(uuid.uuid4()), "user_id": user_id, "kind": kind, "title": title,
+        "body": body, "link": link, "read": False, "created_at": now_iso(),
+    })
+
+
+async def talent_user_for_candidate(slug):
+    u = await db.users.find_one({"candidate_id": slug}, {"_id": 0, "id": 1, "name": 1})
+    return u["id"] if u else None
+
+
+def _slugify(name):
+    base = "".join(c if c.isalnum() else "-" for c in name.lower()).strip("-")
+    return "-".join(filter(None, base.split("-")))
+
+
 async def require_role(*roles):
     async def dep(user: dict = Depends(current_user)):
         if roles and user["role"] not in roles:
@@ -211,6 +230,12 @@ async def add_shortlist(body: ShortlistInput, user: dict = Depends(current_user)
         "id": str(uuid.uuid4()), "user_id": user["id"], "candidate_slug": body.candidate_slug,
         "role_id": body.role_id, "note": body.note, "created_at": now_iso(),
     })
+    tuid = await talent_user_for_candidate(body.candidate_slug)
+    company = None
+    if user.get("company_id"):
+        company = await db.companies.find_one({"id": user["company_id"]}, {"_id": 0, "name": 1})
+    await add_notification(tuid, "shortlist", "You were shortlisted",
+                           f"{(company or {}).get('name', user['name'])} added you to a shortlist.", "/talent")
     return {"ok": True}
 
 
@@ -256,10 +281,20 @@ async def send_message(body: MessageInput, user: dict = Depends(current_user)):
            "body": body.body, "created_at": now_iso()}
     await db.messages.insert_one(msg)
     # auto candidate reply for demo realism
+    import random
+    replies = [
+        "Thanks for reaching out — I'd be glad to learn more. I'm available this week.",
+        "Appreciate you connecting! This role sounds interesting — happy to chat.",
+        "Thanks! I'd love to hear more about the team and the day-to-day.",
+        "Great to hear from you. I'm open to a quick call — mornings work best for me.",
+        "Thank you for considering me. Could you share a bit more about the scope?",
+    ]
     reply = {"id": str(uuid.uuid4()), "thread_id": tid, "sender": "candidate",
-             "body": "Thanks for reaching out — I'd be glad to learn more. I'm available this week.",
-             "created_at": now_iso()}
+             "body": random.choice(replies), "created_at": now_iso()}
     await db.messages.insert_one(reply)
+    tuid = await talent_user_for_candidate(body.to_candidate_slug)
+    await add_notification(tuid, "message", "New recruiter message",
+                           f"{user['name']} sent you a message.", "/talent")
     return {"ok": True, "thread_id": tid}
 
 
@@ -297,8 +332,11 @@ async def request_interview(body: InterviewInput, user: dict = Depends(current_u
     doc = {"id": str(uuid.uuid4()), "user_id": user["id"], "candidate_slug": body.candidate_slug,
            "role_id": body.role_id, "role_title": body.role_title, "scheduled_at": body.scheduled_at,
            "interview_type": body.interview_type, "status": "Requested",
-           "feedback": None, "created_at": now_iso()}
+           "feedback": None, "battle_plan": None, "created_at": now_iso()}
     await db.interviews.insert_one(doc)
+    tuid = await talent_user_for_candidate(body.candidate_slug)
+    await add_notification(tuid, "interview", "Interview requested",
+                           f"{user['name']} requested an interview for {body.role_title or 'a role'}.", "/talent")
     return {"ok": True, "id": doc["id"]}
 
 
@@ -324,6 +362,101 @@ async def schedule_interview(interview_id: str, scheduled_at: str, user: dict = 
     await db.interviews.update_one({"id": interview_id, "user_id": user["id"]},
                                    {"$set": {"scheduled_at": scheduled_at, "status": "Scheduled"}})
     return {"ok": True}
+
+
+@api.post("/interviews/{interview_id}/battle-plan")
+async def gen_battle_plan(interview_id: str, user: dict = Depends(current_user)):
+    it = await db.interviews.find_one({"id": interview_id, "user_id": user["id"]}, {"_id": 0})
+    if not it:
+        raise HTTPException(status_code=404, detail="Interview not found")
+    if it.get("battle_plan"):
+        return {"battle_plan": it["battle_plan"]}
+    cand = await db.candidates.find_one({"slug": it["candidate_slug"]}, {"_id": 0})
+    role = await db.roles.find_one({"id": it.get("role_id")}, {"_id": 0}) if it.get("role_id") else None
+    if not role:
+        role = {"title": it.get("role_title") or cand.get("title"), "seniority": "Mid",
+                "must_have": [s["name"] for s in cand.get("skills", [])[:4]], "domain": "General"}
+    company = await db.companies.find_one({"id": role.get("company_id")}, {"_id": 0}) if role.get("company_id") else None
+    plan = await ai_service.interview_battle_plan(cand, role, company)
+    await db.interviews.update_one({"id": interview_id}, {"$set": {"battle_plan": plan}})
+    return {"battle_plan": plan}
+
+
+# ---------- Notifications ----------
+@api.get("/notifications")
+async def list_notifications(user: dict = Depends(current_user)):
+    items = await db.notifications.find({"user_id": user["id"]}, {"_id": 0}).sort("created_at", -1).to_list(100)
+    unread = sum(1 for n in items if not n["read"])
+    return {"items": items, "unread": unread}
+
+
+@api.post("/notifications/read")
+async def mark_all_read(user: dict = Depends(current_user)):
+    await db.notifications.update_many({"user_id": user["id"]}, {"$set": {"read": True}})
+    return {"ok": True}
+
+
+@api.post("/notifications/{nid}/read")
+async def mark_read(nid: str, user: dict = Depends(current_user)):
+    await db.notifications.update_one({"id": nid, "user_id": user["id"]}, {"$set": {"read": True}})
+    return {"ok": True}
+
+
+# ---------- Talent onboarding ----------
+class OnboardInput(BaseModel):
+    title: str
+    location: str
+    work_model: str = "Hybrid"
+    available_in_days: int = 30
+    work_authorization: str = "U.S. Citizen"
+    education: str
+    experience_years: float = 0
+    skills: List[dict] = []
+    applied_experience: List[dict] = []
+    evidence: List[dict] = []
+
+
+@api.get("/talent/onboarding-status")
+async def onboarding_status(user: dict = Depends(current_user)):
+    fresh = await db.users.find_one({"id": user["id"]}, {"_id": 0})
+    return {"onboarded": bool(fresh.get("candidate_id")), "candidate_id": fresh.get("candidate_id")}
+
+
+@api.post("/talent/onboard")
+async def onboard(body: OnboardInput, user: dict = Depends(current_user)):
+    slug = _slugify(user["name"]) or f"talent-{user['id'][:6]}"
+    if await db.candidates.find_one({"slug": slug}):
+        slug = f"{slug}-{user['id'][:4]}"
+    skills = [{"name": s.get("name", "").strip(), "level": s.get("level", "Intermediate"), "verified": True}
+              for s in body.skills if s.get("name")]
+    adv = sum(1 for s in skills if s["level"] == "Advanced")
+    tech = min(96, 70 + adv * 5 + len(body.evidence) * 2)
+    assessment = {"technical": tech, "problem_solving": max(70, tech - 4),
+                  "communication": 84, "interview_readiness": min(95, 74 + len(body.evidence) * 4)}
+    score = round((tech + assessment["interview_readiness"] + assessment["communication"]) / 3)
+    doc = {
+        "id": slug, "slug": slug, "name": user["name"], "title": body.title, "location": body.location,
+        "avatar": seed_data.AVATARS[hash(slug) % len(seed_data.AVATARS)],
+        "experience_years": body.experience_years, "available_in_days": body.available_in_days,
+        "work_model": body.work_model, "work_authorization": body.work_authorization,
+        "education": body.education, "skills": skills, "assessment": assessment,
+        "professional_experience": [], "applied_experience": body.applied_experience,
+        "evidence": body.evidence, "talent_score": score,
+        "interview_ready": assessment["interview_readiness"] >= 80,
+        "verified": {"identity": True, "education": True, "skills_assessed": True,
+                     "evidence_reviewed": bool(body.evidence), "communication_assessed": True},
+        "gaps": [] if body.evidence else ["Add portfolio evidence to strengthen profile"],
+        "strengths": [s["name"] + " capability" for s in skills[:3]],
+        "career_readiness": score, "role_family": "general",
+    }
+    existing = await db.users.find_one({"id": user["id"]}, {"_id": 0})
+    if existing.get("candidate_id"):
+        await db.candidates.update_one({"slug": existing["candidate_id"]}, {"$set": {k: v for k, v in doc.items() if k not in ("id", "slug")}})
+        slug = existing["candidate_id"]
+    else:
+        await db.candidates.insert_one(dict(doc))
+        await db.users.update_one({"id": user["id"]}, {"$set": {"candidate_id": slug}})
+    return {"ok": True, "slug": slug, "profile_url": f"elevateme.com/talent/{slug}"}
 
 
 # ---------- Talent side ----------
@@ -460,6 +593,24 @@ async def startup():
                 "candidate_id": extra.get("candidate_id"), "company_id": extra.get("company_id"),
             })
     logger.info("ElevateMe seed complete")
+
+    # seed demo notifications
+    if await db.notifications.count_documents({}) == 0:
+        talent_u = await db.users.find_one({"email": "talent@elevateme.com"})
+        rec_u = await db.users.find_one({"email": "recruiter@elevateme.com"})
+        if talent_u:
+            for k, t, b, link in [
+                ("match", "New 94% match", "A Data Analyst role at Acme Inc. is a strong fit.", "/talent/opportunities"),
+                ("view", "Recruiter viewed your profile", "Jordan Blake viewed your Talent Intelligence Profile.", "/talent"),
+                ("readiness", "Boost your readiness", "Complete 2 mock interviews to gain +6 points.", "/talent/readiness"),
+            ]:
+                await add_notification(talent_u["id"], k, t, b, link)
+        if rec_u:
+            for k, t, b, link in [
+                ("match", "3 new strong matches", "New verified candidates match your open Data Analyst role.", "/employer/find-talent"),
+                ("feedback", "Feedback pending", "An interview is awaiting your feedback.", "/employer/interviews"),
+            ]:
+                await add_notification(rec_u["id"], k, t, b, link)
 
 
 @app.on_event("shutdown")

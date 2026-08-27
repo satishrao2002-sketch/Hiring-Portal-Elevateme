@@ -14,6 +14,12 @@ export default function Shortlist() {
   const load = () => api.get("/shortlist").then((r) => setItems(r.data)).catch(() => setItems([]));
   useEffect(() => { load(); }, []);
 
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") setShowCompare(false); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   const remove = async (slug) => {
     await api.delete(`/shortlist/${slug}`);
     toast.success("Removed from shortlist");
@@ -76,7 +82,8 @@ export default function Shortlist() {
               <h2 className="font-display text-2xl text-charcoal">Candidate Comparison</h2>
               <button onClick={() => setShowCompare(false)}><X /></button>
             </div>
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto -mx-2 px-2">
+            <table className="w-full text-sm min-w-[420px]">
               <thead><tr className="border-b border-bordergray">
                 <th className="text-left py-3 label-eyebrow text-bodygray">Candidate</th>
                 {compareCands.map((c) => <th key={c.slug} className="text-left py-3 font-display text-charcoal">{c.name}</th>)}
@@ -99,6 +106,7 @@ export default function Shortlist() {
                 ))}
               </tbody>
             </table>
+            </div>
           </motion.div>
         </div>
       )}

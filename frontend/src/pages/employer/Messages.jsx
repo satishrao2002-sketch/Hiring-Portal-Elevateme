@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Send, Sparkles } from "lucide-react";
 import api from "@/lib/api";
 import { Loading, EmptyState } from "@/components/brand";
@@ -11,9 +11,11 @@ export default function Messages() {
   const [msgs, setMsgs] = useState([]);
   const [text, setText] = useState("");
   const [drafting, setDrafting] = useState(false);
+  const endRef = useRef(null);
 
   const loadThreads = () => api.get("/messages/threads").then((r) => { setThreads(r.data); if (!active && r.data[0]) openThread(r.data[0]); }).catch(() => setThreads([]));
   useEffect(() => { loadThreads(); }, []); // eslint-disable-line
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [msgs]);
 
   const openThread = async (t) => {
     setActive(t);
@@ -47,8 +49,8 @@ export default function Messages() {
         <EmptyState title="No conversations yet" hint="Message a candidate from Find Talent to start a thread."
           actions={<Link to="/employer/find-talent" className="btn-primary rounded-full px-6 py-2.5 label-eyebrow inline-block">Find Talent</Link>} />
       ) : (
-        <div className="grid md:grid-cols-[300px_1fr] gap-4 border border-bordergray rounded-2xl overflow-hidden bg-white" style={{ height: "60vh" }}>
-          <div className="border-r border-bordergray overflow-auto">
+        <div className="grid md:grid-cols-[300px_1fr] gap-0 border border-bordergray rounded-2xl overflow-hidden bg-white h-auto md:h-[62vh]">
+          <div className="border-b md:border-b-0 md:border-r border-bordergray overflow-auto max-h-48 md:max-h-none">
             {threads.map((t) => (
               <button key={t.id} onClick={() => openThread(t)} className={`w-full text-left px-4 py-3 border-b border-bordergray/50 flex items-center gap-3 transition-colors ${active?.id === t.id ? "bg-cream" : "hover:bg-cream/60"}`} data-testid={`thread-${t.candidate?.slug}`}>
                 <img src={t.candidate?.avatar} alt="" className="w-10 h-10 rounded-lg object-cover" />
@@ -56,7 +58,7 @@ export default function Messages() {
               </button>
             ))}
           </div>
-          <div className="flex flex-col">
+          <div className="flex flex-col min-h-[46vh] md:min-h-0">
             {active ? (
               <>
                 <div className="flex-1 overflow-auto p-5 space-y-3">
@@ -65,6 +67,7 @@ export default function Messages() {
                       <p className="text-sm">{m.body}</p>
                     </div>
                   ))}
+                  <div ref={endRef} />
                 </div>
                 <div className="border-t border-bordergray p-3">
                   <div className="flex items-center gap-2">

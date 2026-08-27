@@ -1,13 +1,18 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Bookmark, ArrowRight, TrendingUp } from "lucide-react";
+import { ArrowRight, TrendingUp } from "lucide-react";
 import api from "@/lib/api";
-import { Loading, MatchRing, Pill, CheckLine } from "@/components/brand";
+import { Loading, MatchRing, Pill } from "@/components/brand";
+import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 
 export default function Opportunities() {
+  const { user } = useAuth();
   const [data, setData] = useState(null);
-  useEffect(() => { api.get("/talent/dashboard").then((r) => setData(r.data)).catch(() => {}); }, []);
+  useEffect(() => {
+    const slug = user?.candidate_id;
+    api.get(`/talent/dashboard${slug ? `?slug=${slug}` : ""}`).then((r) => setData(r.data)).catch(() => {});
+  }, [user]);
   if (!data) return <Loading label="Finding opportunities aligned to your profile..." />;
 
   return (

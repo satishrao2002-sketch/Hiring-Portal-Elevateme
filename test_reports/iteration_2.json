@@ -1,0 +1,35 @@
+{
+  "summary": "Frontend-only verification of the 7 iteration_1 fixes plus core regressions on the public preview URL (mobile 390x844 + desktop 1920x1080). ALL 7 FIXES VERIFIED PASS: (1) mobile account menu + sign-out works (mobile-account-btn -> mobile-logout-btn -> lands on /login and /employer is protected afterwards); (2) catch-all route redirects /employer/does-not-exist and /random to landing; (3) Escape closes battle-plan-modal and compare-modal and underlying buttons (feedback-btn-*, compare-toggle-*) are clickable again; (4) onboarding wizard is prefilled for already-onboarded talent (title='Data Analyst', location='Chicago, IL', education='M.S. Business Analytics — University of Illinois Chicago', exp=2.4, skill-name-0='SQL') and re-publishing from the prefilled wizard preserves data (no data loss); (5) bells are de-duplicated - only notification-bell-mobile visible at 390px and only notification-bell-desktop at 1920px, unread badge shows (desktop badge='1' after a new message), panel opens, mark-all-read clears the badge; (6) Messages autoscroll - newest sent message is inside the viewport after send (verified via getBoundingClientRect); (7) Talent Room role-scoped KPIs are numeric (0 -> 1/1 after shortlisting + requesting an interview for role-acme-da, verified with reload). REGRESSIONS PASS: employer AI role intake on /employer/find-talent (role-intelligence + 6 talent cards), shortlist compare modal, AI draft (360 chars) + send, battle plan AI content (3203 chars), schedule + strong-hire feedback, candidate why-this-match (762 chars), talent Career Match (4 AI role recs), Opportunities (3), Readiness, admin Command Center/Candidates/Employers/Analytics (no error nodes), mobile landing 0px horizontal overflow + hamburger opens, fresh talent registration -> /talent/onboarding with EMPTY wizard -> 5 steps -> publish -> /talent.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "ProductLayout mobile bottom nav (talent)", "issue": "Two nav items render the identical visible label 'Career' (Career Match and Career Readiness are both truncated to first word), so mobile talent users cannot distinguish them. Testids are distinct so only a UX/labelling problem.", "selector": "[data-testid=\"mobile-nav-career-match\"], [data-testid=\"mobile-nav-career-readiness\"]", "priority": "LOW"},
+      {"component": "TalentRoom KPI tiles", "issue": "KPI tiles had no data-testid; added room-kpi-* / room-kpi-value-* during testing (test-only attribute addition, no logic change).", "selector": "[data-testid=\"room-kpi-value-shortlisted\"]", "priority": "LOW"}
+    ],
+    "integration_issues": [
+      {"flow": "Employer Messages auto-reply", "issue": "Every candidate auto-reply is still the identical canned string ('Thanks for reaching out — I'd be glad to learn more. I'm available this week.'), so a thread reads as 5+ duplicate replies. Carried over from iteration_1, not fixed.", "affected_selectors": ["[data-testid=\"send-message\"]"]}
+    ],
+    "design_issues": [
+      {"screen": "Notifications panel", "issues": ["Seeded/generated notifications are still all the same 'Candidate replied' text; talent unread count has accumulated to 14 which looks like demo noise"]},
+      {"screen": "Employer Interviews", "issues": ["Interview cards remain dominated by the same candidate (Priya Shah)"]}
+    ]
+  },
+  "test_report_links": ["/app/test_reports/iteration_2.json"],
+  "action_items": [
+    "Optional LOW: shorten/differentiate mobile bottom-nav labels for talent (both show 'Career')",
+    "Optional LOW: vary candidate auto-reply text and seeded notification copy for demo credibility"
+  ],
+  "critical_code_review_comments": [
+    "All 7 fixes are implemented cleanly: App.js Route path='*' -> Navigate '/', window keydown Escape handlers with cleanup in Interviews.jsx/Shortlist.jsx, endRef scrollIntoView on [msgs] in Messages.jsx, prefill via GET /candidates/{candidate_id} in Onboarding.jsx, variant-suffixed bell testids, role-scoped count filters in TalentRoom.jsx.",
+    "TalentRoom fetches the full /shortlist and /interviews lists and filters client-side for role counts — fine at demo scale, but should become server-side role-filtered endpoints if data grows.",
+    "Escape handlers are registered on window at page level (not per-modal); acceptable here but a shared useEscape hook would remove the duplication across Interviews.jsx and Shortlist.jsx."
+  ],
+  "updated_files": ["/app/frontend/src/pages/employer/TalentRoom.jsx (added data-testid room-kpi-* / room-kpi-value-* to the 4 KPI tiles for testability)"],
+  "success_rate": {"backend": "not tested (per request)", "frontend": "100% of the 7 fixes verified; all requested regressions pass (only 3 LOW cosmetic/demo-data items remain)"},
+  "seed_data_creation": "Registered fresh talent TEST_qa_talent_1787788634@example.com / Demo@123 (published: Data Analyst, Chicago IL, SQL+Python, slug qa-fresh-talent). On the employer demo account: shortlisted + requested interview for Sofia Martinez on role-acme-da, sent messages 'TEST_autoscroll check 12345' and 'TEST_notif trigger' plus one AI-drafted message, scheduled one interview and submitted one Strong Hire feedback.",
+  "should_call_test_agent_after_fix": false,
+  "should_main_agent_self_test": true,
+  "test_credentials": "employer@elevateme.com/Demo@123, talent@elevateme.com/Demo@123, admin@elevateme.com/Admin@123 — all verified working; /app/memory/test_credentials.md accurate",
+  "context_for_next_testing_agent": "Escape now closes modals (safe to use in scripts). Bells: use notification-bell-mobile at <768px and notification-bell-desktop at >=768px. AI role intake lives on /employer/find-talent (NOT /employer). Career Match results use data-testid career-role-{i}. TalentRoom KPI values now addressable via room-kpi-value-shortlisted / -interviews. Onboarding prefill confirmed and re-publishing preserves existing profile data. Remaining known-LOW items: duplicate 'Career' mobile nav labels, identical canned candidate auto-replies, repetitive notification copy.",
+  "rca_of_the_issue": "N/A - all previously reported defects are resolved; earlier transient observation of 'mobile bell not visible' was a timing artifact (checked while ProductLayout was still in the 'Loading your workspace...' state) and re-tested PASS with an explicit visible-state wait."
+}

@@ -1,12 +1,17 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle2, ArrowUpRight } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import api from "@/lib/api";
 import { Loading, MatchRing, DimBar } from "@/components/brand";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Readiness() {
+  const { user } = useAuth();
   const [data, setData] = useState(null);
-  useEffect(() => { api.get("/talent/dashboard").then((r) => setData(r.data)).catch(() => {}); }, []);
+  useEffect(() => {
+    const slug = user?.candidate_id;
+    api.get(`/talent/dashboard${slug ? `?slug=${slug}` : ""}`).then((r) => setData(r.data)).catch(() => {});
+  }, [user]);
   if (!data) return <Loading label="Analyzing your readiness..." />;
   const { readiness, holding_back } = data;
 

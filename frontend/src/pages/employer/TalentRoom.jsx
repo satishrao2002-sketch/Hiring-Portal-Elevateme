@@ -10,10 +10,18 @@ const TABS = ["Overview", "Matches", "Shortlist", "Interviews", "Activity"];
 export default function TalentRoom() {
   const { roleId } = useParams();
   const [data, setData] = useState(null);
+  const [counts, setCounts] = useState({ shortlisted: 0, interviews: 0 });
   const [tab, setTab] = useState("Matches");
 
   useEffect(() => {
     api.get(`/roles/${roleId}/matches`).then((r) => setData(r.data)).catch(() => {});
+    Promise.all([
+      api.get("/shortlist").catch(() => ({ data: [] })),
+      api.get("/interviews").catch(() => ({ data: [] })),
+    ]).then(([sl, iv]) => setCounts({
+      shortlisted: sl.data.filter((s) => s.role_id === roleId).length,
+      interviews: iv.data.filter((i) => i.role_id === roleId).length,
+    }));
   }, [roleId]);
 
   if (!data) return <Loading label="Opening talent room..." />;
@@ -32,8 +40,8 @@ export default function TalentRoom() {
       <div className="flex flex-wrap gap-2 mt-3">{role.must_have.map((s) => <Pill key={s} tone="terracotta">{s}</Pill>)}</div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-        {[["Strong matches", strong.length], ["Interview-ready", ready.length], ["Shortlisted", "—"], ["Interviews", "—"]].map(([l, v]) => (
-          <div key={l} className="bg-white border border-bordergray rounded-xl p-4"><p className="font-display text-3xl text-charcoal">{v}</p><p className="label-eyebrow text-bodygray">{l}</p></div>
+        {[["Strong matches", strong.length], ["Interview-ready", ready.length], ["Shortlisted", counts.shortlisted], ["Interviews", counts.interviews]].map(([l, v]) => (
+          <div key={l} className="bg-white border border-bordergray rounded-xl p-4" data-testid={`room-kpi-${l.toLowerCase().replace(/\s+/g, "-")}`}><p className="font-display text-3xl text-charcoal" data-testid={`room-kpi-value-${l.toLowerCase().replace(/\s+/g, "-")}`}>{v}</p><p className="label-eyebrow text-bodygray">{l}</p></div>
         ))}
       </div>
 

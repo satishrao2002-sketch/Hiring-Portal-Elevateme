@@ -136,3 +136,48 @@ async def draft_message(context: str) -> str:
     except Exception:
         return ("Hi — I came across your ElevateMe profile and your background looks like a strong "
                 "match for a role we're hiring for. Would you be open to a quick conversation this week?")
+
+
+
+async def interview_battle_plan(candidate: dict, role: dict, company: dict) -> dict:
+    system = ("You are ElevateMe's Interview Battle Plan generator. Produce honest, practical, "
+              "role-specific interview preparation. Never fabricate facts about the company. "
+              "Respond ONLY with JSON.")
+    cname = (company or {}).get("name", "the company")
+    prompt = f"""Generate an interview battle plan as JSON with EXACTLY these keys:
+company_overview (2 sentences about {cname} in the {(company or {}).get('industry','tech')} space),
+role_overview (2 sentences about the {role.get('title')} role),
+likely_topics (array of 4-6 short strings),
+technical_questions (array of 4 strings),
+behavioral_questions (array of 3 strings),
+project_questions (array of 2 strings referencing the candidate's actual work),
+candidate_strengths (array of 3 strings),
+candidate_risks (array of 2 honest strings),
+prep_tasks (array of 4 short actionable strings).
+
+Role: {role.get('title')} ({role.get('seniority')}), must-have {role.get('must_have')}, domain {role.get('domain')}.
+Candidate: {candidate.get('name')}, {candidate.get('title')}, {candidate.get('experience_years')} yrs.
+Verified skills: {[s['name'] for s in candidate.get('skills', [])]}.
+Applied experience: {[e.get('title') for e in candidate.get('applied_experience', [])]}.
+Strengths: {candidate.get('strengths')}. Gaps: {candidate.get('gaps')}."""
+    try:
+        raw = await _complete(system, prompt)
+        data = _extract_json(raw)
+        for k in ["likely_topics", "technical_questions", "behavioral_questions", "project_questions",
+                  "candidate_strengths", "candidate_risks", "prep_tasks"]:
+            data.setdefault(k, [])
+        data.setdefault("company_overview", f"{cname} is hiring for this role.")
+        data.setdefault("role_overview", f"{role.get('title')} role focused on {role.get('domain','the domain')}.")
+        return data
+    except Exception:
+        return {
+            "company_overview": f"{cname} operates in {(company or {}).get('industry','technology')}.",
+            "role_overview": f"A {role.get('seniority','')} {role.get('title')} focused on {role.get('domain','the domain')}.",
+            "likely_topics": role.get("must_have", [])[:5] + ["Problem solving", "Communication"],
+            "technical_questions": [f"Walk through how you would use {s} on this role." for s in role.get("must_have", [])[:4]],
+            "behavioral_questions": ["Tell me about a project you're proud of.", "Describe a time you handled ambiguity.", "How do you prioritize under deadlines?"],
+            "project_questions": [f"Explain your {e.get('title')} project end to end." for e in candidate.get("applied_experience", [])[:2]],
+            "candidate_strengths": candidate.get("strengths", [])[:3],
+            "candidate_risks": candidate.get("gaps", [])[:2],
+            "prep_tasks": ["Review must-have skills", "Prepare 2 project walkthroughs", "Complete 1 mock interview", "Research the company"],
+        }

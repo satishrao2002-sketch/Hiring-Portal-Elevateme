@@ -40,7 +40,7 @@ function Nav() {
   ];
   return (
     <header className="fixed top-0 inset-x-0 z-50">
-      <div className="mx-auto max-w-7xl px-5 md:px-8 mt-4">
+      <div className="mx-auto max-w-6xl px-5 md:px-8 mt-4">
         <nav className="flex items-center justify-between bg-cream/85 backdrop-blur-md border border-bordergray/60 rounded-full px-5 py-2.5">
           <Link to="/"><Logo /></Link>
           <div className="hidden lg:flex items-center gap-7">
@@ -73,14 +73,14 @@ function Nav() {
 }
 
 function Section({ id, children, className = "" }) {
-  return <section id={id} className={`relative z-10 max-w-7xl mx-auto px-5 md:px-8 ${className}`}>{children}</section>;
+  return <section id={id} className={`relative z-10 max-w-6xl mx-auto px-5 md:px-8 ${className}`}>{children}</section>;
 }
 
 function Chapter({ n, title }) {
   return (
     <motion.div variants={REVEAL} initial="hidden" whileInView="show" viewport={{ once: true, margin: "-80px" }}
-      className="flex items-baseline gap-4 mb-10">
-      <span className="font-serif-accent text-terracotta text-2xl italic">{n}</span>
+      className="flex items-baseline gap-3 mb-8">
+      <span className="font-serif-accent text-terracotta text-xl italic">{n}</span>
       <span className="label-eyebrow text-bodygray">{title}</span>
       <span className="flex-1 h-px bg-bordergray/70" />
     </motion.div>
@@ -114,69 +114,82 @@ export default function Landing() {
       <Nav />
 
       {/* HERO */}
-      <Section className="pt-36 md:pt-44 pb-20">
-        <motion.p variants={REVEAL} initial="hidden" animate="show" className="label-eyebrow text-terracotta mb-6 flex items-center gap-2">
-          <Sparkles size={14} /> Talent Intelligence Marketplace
-        </motion.p>
-        <h1 className="font-display text-charcoal leading-[0.92] text-[13vw] sm:text-[10vw] lg:text-[7.5rem]">
-          <MaskLine delay={0.05}>FIND THE</MaskLine>
-          <MaskLine delay={0.15}><span className="text-terracotta">RIGHT TALENT.</span></MaskLine>
-          <MaskLine delay={0.25}>GET HIRED</MaskLine>
-          <MaskLine delay={0.35}><span className="text-brandgreen">FASTER.</span></MaskLine>
-        </h1>
-
-        <motion.div variants={REVEAL} custom={5} initial="hidden" animate="show" className="grid lg:grid-cols-[1.1fr_1fr] gap-10 items-end mt-12">
+      <Section className="pt-28 md:pt-32 pb-14">
+        <div className="grid lg:grid-cols-[1.05fr_0.95fr] gap-10 lg:gap-14 items-center">
           <div>
-            <p className="text-lg md:text-xl text-bodygray max-w-xl leading-relaxed">
+            <motion.p variants={REVEAL} initial="hidden" animate="show" className="label-eyebrow text-terracotta mb-5 inline-flex items-center gap-2 bg-white border border-bordergray/70 rounded-full px-3 py-1.5">
+              <Sparkles size={13} /> Talent Intelligence Marketplace
+            </motion.p>
+            <h1 className="font-display text-charcoal leading-[0.9] text-5xl sm:text-6xl lg:text-[4.6rem]">
+              <MaskLine delay={0.05}>Find the <span className="text-terracotta">right talent.</span></MaskLine>
+              <MaskLine delay={0.16}>Get hired <span className="text-brandgreen">faster.</span></MaskLine>
+            </h1>
+            <motion.p variants={REVEAL} custom={4} initial="hidden" animate="show" className="text-base md:text-lg text-bodygray max-w-lg leading-relaxed mt-6">
               A talent intelligence platform connecting employers with <span className="text-charcoal font-bold">verified, role-matched</span> professionals — while helping candidates become genuinely hire-ready.
-            </p>
-            <div className="flex flex-wrap gap-3 mt-8">
-              <Link to="/register" state={{ role: "employer" }} className="btn-primary rounded-full px-7 py-3.5 label-eyebrow inline-flex items-center gap-2" data-testid="hero-find-talent">
-                Find Talent <ArrowRight size={16} />
+            </motion.p>
+            <motion.div variants={REVEAL} custom={5} initial="hidden" animate="show" className="flex flex-wrap gap-2.5 mt-7">
+              <Link to="/register" state={{ role: "employer" }} className="btn-primary rounded-full px-6 py-3 label-eyebrow inline-flex items-center gap-2" data-testid="hero-find-talent">
+                Find Talent <ArrowRight size={15} />
               </Link>
-              <Link to="/register" state={{ role: "talent" }} className="btn-secondary rounded-full px-7 py-3.5 label-eyebrow inline-flex items-center gap-2" data-testid="hero-find-opportunities">
+              <Link to="/register" state={{ role: "talent" }} className="btn-secondary rounded-full px-6 py-3 label-eyebrow inline-flex items-center gap-2" data-testid="hero-find-opportunities">
                 Find Opportunities
               </Link>
-              <a href="#how" className="rounded-full px-7 py-3.5 label-eyebrow border border-bordergray text-charcoal hover:border-charcoal transition-colors inline-flex items-center gap-2" data-testid="hero-how-it-works">
+              <a href="#how" className="rounded-full px-6 py-3 label-eyebrow border border-bordergray text-charcoal hover:border-charcoal transition-colors inline-flex items-center gap-2" data-testid="hero-how-it-works">
                 How It Works
               </a>
-            </div>
+            </motion.div>
+            <motion.div variants={REVEAL} custom={6} initial="hidden" animate="show" className="flex items-center gap-3 mt-8">
+              <div className="flex -space-x-2">
+                {["1494790108377-be9c29b29330", "1500648767791-00dcc994a43e", "1507003211169-0a1dd7228f2d", "1519085360753-af0119f7cbe7"].map((id) => (
+                  <img key={id} src={`https://images.unsplash.com/photo-${id}?crop=entropy&cs=srgb&fm=jpg&q=85&w=80`} alt="" className="w-8 h-8 rounded-full object-cover border-2 border-cream" />
+                ))}
+              </div>
+              <p className="text-sm text-bodygray"><span className="font-bold text-charcoal">1,200+</span> verified professionals ready to meet</p>
+            </motion.div>
           </div>
 
-          {/* Floating match card (subtle parallax) */}
-          <motion.div
-            initial={{ opacity: 0, y: 40, rotate: -1 }}
-            animate={{ opacity: 1, y: 0, rotate: -1.2 }}
-            transition={{ duration: 1, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            whileHover={{ rotate: 0, y: -6 }}
-            className="bg-white border border-bordergray rounded-2xl p-6 shadow-[0_30px_60px_-30px_rgba(26,26,26,0.35)]"
-            data-testid="hero-match-card"
-          >
-            <div className="flex items-center gap-4">
-              <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?crop=entropy&cs=srgb&fm=jpg&q=85&w=200" alt="Priya Shah" className="w-14 h-14 rounded-lg object-cover" />
-              <div className="flex-1">
-                <p className="font-display text-lg text-charcoal">Priya Shah</p>
-                <p className="text-sm text-bodygray">Data Analyst · Chicago</p>
+          {/* Right: layered cards fill the space */}
+          <div className="relative lg:min-h-[420px] mt-2 lg:mt-0">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.9, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
+              className="relative lg:absolute lg:right-0 lg:top-0 w-full lg:w-[86%] bg-white border border-bordergray rounded-2xl p-5 shadow-[0_30px_60px_-32px_rgba(26,26,26,0.4)] z-20"
+              data-testid="hero-match-card"
+            >
+              <div className="flex items-center gap-3">
+                <img src="https://images.unsplash.com/photo-1758691737605-69a0e78bd193?crop=entropy&cs=srgb&fm=jpg&q=85&w=200" alt="Priya Shah" className="w-12 h-12 rounded-lg object-cover" />
+                <div className="flex-1"><p className="font-display text-charcoal">Priya Shah</p><p className="text-xs text-bodygray">Data Analyst · Chicago</p></div>
+                <MatchRing value={94} size={50} stroke={5} />
               </div>
-              <MatchRing value={94} size={56} stroke={5} />
-            </div>
-            <div className="flex gap-1.5 mt-4">{["SQL", "Python", "Power BI"].map((s) => <Pill key={s}>{s}</Pill>)}</div>
-            <div className="mt-4 space-y-2">
-              <DimBar label="Skills" value={96} />
-              <DimBar label="Readiness" value={91} />
-            </div>
-            <div className="flex items-center gap-2 mt-4"><Pill tone="green">Interview Ready</Pill><VerifiedBadge /></div>
-          </motion.div>
-        </motion.div>
+              <div className="flex gap-1.5 mt-3">{["SQL", "Python", "Power BI"].map((s) => <Pill key={s}>{s}</Pill>)}</div>
+              <div className="mt-3 space-y-2"><DimBar label="Skills" value={96} /><DimBar label="Readiness" value={91} /></div>
+              <div className="flex items-center gap-2 mt-3"><Pill tone="green">Interview Ready</Pill><VerifiedBadge /></div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.9, delay: 0.55, ease: [0.16, 1, 0.3, 1] }}
+              className="relative mt-4 lg:mt-0 lg:absolute lg:left-0 lg:bottom-2 w-full lg:w-[74%] bg-charcoal text-cream rounded-2xl p-5 shadow-[0_30px_60px_-32px_rgba(26,26,26,0.5)] z-10"
+            >
+              <p className="label-eyebrow text-terracotta">Tell us who you need</p>
+              <p className="text-sm text-cream/80 mt-2 leading-snug">"Junior Data Analyst in Chicago — SQL, Python, Power BI, hybrid…"</p>
+              <div className="grid grid-cols-3 gap-2 mt-4">
+                {[["23", "strong"], ["8", "ready"], ["4", "exceptional"]].map(([n, l]) => (
+                  <div key={l} className="bg-white/5 border border-white/10 rounded-lg py-2 text-center"><p className="font-display text-xl">{n}</p><p className="label-eyebrow text-cream/50">{l}</p></div>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+        </div>
       </Section>
 
       {/* MARQUEE */}
-      <div className="relative z-10 border-y border-bordergray/60 py-4 bg-charcoal my-6 overflow-hidden">
+      <div className="relative z-10 border-y border-bordergray/60 py-3 bg-charcoal overflow-hidden">
         <div className="marquee-track">
           {[0, 1].map((k) => (
-            <span key={k} className="text-cream/90 font-display text-xl md:text-2xl">
+            <span key={k} className="text-cream/85 font-display text-base md:text-lg">
               {["Match Intelligence", "Verified Talent", "Evidence Over Claims", "Hiring Speed", "Placement Outcomes", "Career Readiness"].map((w) => (
-                <span key={w} className="mx-8 inline-flex items-center gap-3">{w} <ArrowUpRight size={18} className="text-terracotta" /></span>
+                <span key={w} className="mx-6 inline-flex items-center gap-2.5">{w} <ArrowUpRight size={15} className="text-terracotta" /></span>
               ))}
             </span>
           ))}
@@ -184,11 +197,12 @@ export default function Landing() {
       </div>
 
       {/* STATS */}
-      <Section className="py-16">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+      <Section className="py-12">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[["Verified talent", "1,200+"], ["Avg. time to interview", "6 days"], ["Placement rate", "78%"], ["Match acceptance", "3.2×"]].map(([l, v], i) => (
-            <motion.div key={l} variants={REVEAL} custom={i} initial="hidden" whileInView="show" viewport={{ once: true }}>
-              <p className="font-display text-4xl md:text-5xl text-charcoal">{v}</p>
+            <motion.div key={l} variants={REVEAL} custom={i} initial="hidden" whileInView="show" viewport={{ once: true }}
+              className="bg-white border border-bordergray rounded-xl p-5">
+              <p className="font-display text-3xl md:text-4xl text-charcoal">{v}</p>
               <p className="label-eyebrow text-bodygray mt-1">{l}</p>
             </motion.div>
           ))}
@@ -196,12 +210,12 @@ export default function Landing() {
       </Section>
 
       {/* TELL US WHO YOU NEED — employers */}
-      <Section id="employers" className="py-20">
+      <Section id="employers" className="py-16">
         <Chapter n="01" title="For Employers" />
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
+        <div className="grid lg:grid-cols-2 gap-10 items-center">
           <motion.div variants={REVEAL} initial="hidden" whileInView="show" viewport={{ once: true }}>
-            <h2 className="font-display text-4xl md:text-6xl text-charcoal leading-[0.95]">Tell us who you need.<br /><span className="text-terracotta">We'll show you who to meet.</span></h2>
-            <p className="text-bodygray text-lg mt-5 max-w-lg">Skip the giant candidate directory. Describe your hiring need in plain English and ElevateMe converts it into structured requirements — then surfaces verified, interview-ready talent.</p>
+            <h2 className="font-display text-3xl md:text-5xl text-charcoal leading-[0.95]">Tell us who you need.<br /><span className="text-terracotta">We'll show you who to meet.</span></h2>
+            <p className="text-bodygray text-base mt-4 max-w-lg">Skip the giant candidate directory. Describe your hiring need in plain English and ElevateMe converts it into structured requirements — then surfaces verified, interview-ready talent.</p>
             <ul className="mt-6 space-y-2">
               <CheckLine>Natural-language role intake, powered by AI</CheckLine>
               <CheckLine>Instant availability: strong, ready & exceptional matches</CheckLine>
@@ -236,7 +250,7 @@ export default function Landing() {
       </Section>
 
       {/* HOW IT WORKS */}
-      <Section id="how" className="py-20">
+      <Section id="how" className="py-16">
         <Chapter n="02" title="How ElevateMe Works" />
         <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-4">
           {[
@@ -259,9 +273,9 @@ export default function Landing() {
       </Section>
 
       {/* MATCH INTELLIGENCE */}
-      <Section id="match" className="py-20">
+      <Section id="match" className="py-16">
         <Chapter n="03" title="Match Intelligence" />
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
+        <div className="grid lg:grid-cols-2 gap-10 items-center">
           <motion.div variants={REVEAL} initial="hidden" whileInView="show" viewport={{ once: true }}
             className="bg-white border border-bordergray rounded-2xl p-7 shadow-sm order-2 lg:order-1" data-testid="landing-why-match">
             <div className="flex items-center gap-4 mb-5">
@@ -284,8 +298,8 @@ export default function Landing() {
           </motion.div>
 
           <motion.div variants={REVEAL} initial="hidden" whileInView="show" viewport={{ once: true }} className="order-1 lg:order-2">
-            <h2 className="font-display text-4xl md:text-6xl text-charcoal leading-[0.95]">No black-box scores. Just evidence.</h2>
-            <p className="text-bodygray text-lg mt-5 max-w-lg">Every role-to-candidate relationship generates an explainable match — skills, experience, role alignment, location, availability and readiness — each decomposed and defensible.</p>
+            <h2 className="font-display text-3xl md:text-5xl text-charcoal leading-[0.95]">No black-box scores. Just evidence.</h2>
+            <p className="text-bodygray text-base mt-4 max-w-lg">Every role-to-candidate relationship generates an explainable match — skills, experience, role alignment, location, availability and readiness — each decomposed and defensible.</p>
             <div className="flex flex-wrap gap-2 mt-6">
               {["Verified skills", "Project evidence", "Assessment scores", "Honest risk flags"].map((t) => <Pill key={t} tone="terracotta">{t}</Pill>)}
             </div>
@@ -294,14 +308,14 @@ export default function Landing() {
       </Section>
 
       {/* TALENT SIDE */}
-      <Section id="talent" className="py-20">
+      <Section id="talent" className="py-16">
         <Chapter n="04" title="For Talent" />
-        <div className="grid lg:grid-cols-[1fr_1.1fr] gap-12 items-center">
+        <div className="grid lg:grid-cols-[1fr_1.1fr] gap-10 items-center">
           <motion.div variants={REVEAL} initial="hidden" whileInView="show" viewport={{ once: true }}>
-            <h2 className="font-display text-4xl md:text-6xl text-charcoal leading-[0.95]">Don't apply everywhere.<br /><span className="text-brandgreen">Get discovered where you fit.</span></h2>
-            <p className="text-bodygray text-lg mt-5 max-w-lg">Your career control center shows exactly what to target, why you're a match, what's holding you back and what to do next.</p>
-            <Link to="/register" state={{ role: "talent" }} className="btn-secondary rounded-full px-7 py-3.5 label-eyebrow inline-flex items-center gap-2 mt-7" data-testid="talent-cta">
-              Build Your Profile <ArrowRight size={16} />
+            <h2 className="font-display text-3xl md:text-5xl text-charcoal leading-[0.95]">Don't apply everywhere.<br /><span className="text-brandgreen">Get discovered where you fit.</span></h2>
+            <p className="text-bodygray text-base mt-4 max-w-lg">Your career control center shows exactly what to target, why you're a match, what's holding you back and what to do next.</p>
+            <Link to="/register" state={{ role: "talent" }} className="btn-secondary rounded-full px-6 py-3 label-eyebrow inline-flex items-center gap-2 mt-6" data-testid="talent-cta">
+              Build Your Profile <ArrowRight size={15} />
             </Link>
           </motion.div>
 
@@ -327,7 +341,7 @@ export default function Landing() {
       </Section>
 
       {/* OUTCOMES / TRUST */}
-      <Section id="outcomes" className="py-20">
+      <Section id="outcomes" className="py-16">
         <Chapter n="05" title="Outcomes & Trust" />
         <div className="grid md:grid-cols-3 gap-5">
           {[
@@ -346,9 +360,9 @@ export default function Landing() {
       </Section>
 
       {/* CTA */}
-      <Section className="py-24">
-        <div className="bg-terracotta rounded-3xl px-8 md:px-16 py-16 text-center relative overflow-hidden">
-          <h2 className="font-display text-4xl md:text-6xl text-white leading-[0.95] relative z-10">Build better talent.<br />Match better. Place better.</h2>
+      <Section className="py-16">
+        <div className="bg-terracotta rounded-3xl px-8 md:px-16 py-14 text-center relative overflow-hidden">
+          <h2 className="font-display text-3xl md:text-5xl text-white leading-[0.95] relative z-10">Build better talent.<br />Match better. Place better.</h2>
           <div className="flex flex-wrap gap-3 justify-center mt-8 relative z-10">
             <Link to="/register" state={{ role: "employer" }} className="bg-white text-terracotta rounded-full px-7 py-3.5 label-eyebrow inline-flex items-center gap-2 hover:bg-cream transition-colors" data-testid="cta-employer">Find Talent <ArrowRight size={16} /></Link>
             <Link to="/register" state={{ role: "talent" }} className="bg-charcoal text-cream rounded-full px-7 py-3.5 label-eyebrow inline-flex items-center gap-2 hover:bg-black transition-colors" data-testid="cta-talent">Find Opportunities</Link>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowUpRight, TrendingUp, Target } from "lucide-react";
 import api from "@/lib/api";
@@ -8,9 +8,14 @@ import { useAuth } from "@/context/AuthContext";
 
 export default function TalentDashboard() {
   const { user } = useAuth();
+  const nav = useNavigate();
   const [data, setData] = useState(null);
 
-  useEffect(() => { api.get("/talent/dashboard").then((r) => setData(r.data)).catch(() => {}); }, []);
+  useEffect(() => {
+    if (user && user.role === "talent" && !user.candidate_id) { nav("/talent/onboarding"); return; }
+    const slug = user?.candidate_id;
+    api.get(`/talent/dashboard${slug ? `?slug=${slug}` : ""}`).then((r) => setData(r.data)).catch(() => {});
+  }, [user, nav]);
   if (!data) return <Loading label="Building your career control center..." />;
 
   const { readiness, career_paths, opportunities, holding_back } = data;

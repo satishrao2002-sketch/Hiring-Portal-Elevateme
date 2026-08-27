@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/context/AuthContext";
 import ProductLayout from "@/components/product/ProductLayout";
@@ -16,6 +16,7 @@ import CandidateProfile from "@/pages/employer/CandidateProfile";
 import TalentRoom from "@/pages/employer/TalentRoom";
 
 import TalentDashboard from "@/pages/talent/TalentDashboard";
+import Onboarding from "@/pages/talent/Onboarding";
 import CareerMatch from "@/pages/talent/CareerMatch";
 import Opportunities from "@/pages/talent/Opportunities";
 import Readiness from "@/pages/talent/Readiness";
@@ -46,6 +47,7 @@ function App() {
           <Route path="/employer/room/:roleId" element={<ProductLayout roles={EMP}><TalentRoom /></ProductLayout>} />
 
           <Route path="/talent" element={<ProductLayout roles={["talent", "admin"]}><TalentDashboard /></ProductLayout>} />
+          <Route path="/talent/onboarding" element={<ProductLayout roles={["talent", "admin"]}><Onboarding /></ProductLayout>} />
           <Route path="/talent/career" element={<ProductLayout roles={["talent", "admin"]}><CareerMatch /></ProductLayout>} />
           <Route path="/talent/opportunities" element={<ProductLayout roles={["talent", "admin"]}><Opportunities /></ProductLayout>} />
           <Route path="/talent/readiness" element={<ProductLayout roles={["talent", "admin"]}><Readiness /></ProductLayout>} />
@@ -54,6 +56,8 @@ function App() {
           <Route path="/admin/candidates" element={<ProductLayout roles={["admin"]}><AdminCandidates /></ProductLayout>} />
           <Route path="/admin/employers" element={<ProductLayout roles={["admin"]}><AdminEmployers /></ProductLayout>} />
           <Route path="/admin/analytics" element={<ProductLayout roles={["admin"]}><AdminAnalytics /></ProductLayout>} />
+
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
