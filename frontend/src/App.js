@@ -7,6 +7,13 @@ import Landing from "@/pages/Landing";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 
+import { CareersHub, CareerDetail } from "@/pages/public/Careers";
+import { SkillsHub, SkillDetail } from "@/pages/public/Skills";
+import { JobsHub, JobDetail } from "@/pages/public/Jobs";
+import { LocationDetail, CompanyPublic } from "@/pages/public/Places";
+import { MarketInsightsHub, MarketReport } from "@/pages/public/MarketInsights";
+import StaticPage from "@/pages/public/StaticPage";
+
 import EmployerDashboard from "@/pages/employer/EmployerDashboard";
 import FindTalent from "@/pages/employer/FindTalent";
 import Shortlist from "@/pages/employer/Shortlist";
@@ -37,6 +44,26 @@ function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+
+          {/* Public discovery layer (SEO / GEO / AEO) */}
+          <Route path="/careers" element={<CareersHub />} />
+          <Route path="/careers/:slug" element={<CareerDetail />} />
+          <Route path="/skills" element={<SkillsHub />} />
+          <Route path="/skills/:slug" element={<SkillDetail />} />
+          <Route path="/jobs" element={<JobsHub />} />
+          <Route path="/jobs/:id" element={<JobDetail />} />
+          <Route path="/locations/:slug" element={<LocationDetail />} />
+          <Route path="/companies/:id" element={<CompanyPublic />} />
+          <Route path="/market-insights" element={<MarketInsightsHub />} />
+          <Route path="/market-insights/:slug" element={<MarketReport />} />
+          <Route path="/about" element={<StaticPage slug="about" />} />
+          <Route path="/how-it-works" element={<StaticPage slug="how-it-works" />} />
+          <Route path="/trust" element={<StaticPage slug="trust" />} />
+          <Route path="/methodology" element={<StaticPage slug="methodology" />} />
+          <Route path="/ai" element={<StaticPage slug="ai" />} />
+          <Route path="/for-students" element={<StaticPage slug="for-students" />} />
+          <Route path="/for-employers" element={<StaticPage slug="for-employers" />} />
+          <Route path="/for-recruiters" element={<StaticPage slug="for-recruiters" />} />
 
           <Route path="/employer" element={<ProductLayout roles={EMP}><EmployerDashboard /></ProductLayout>} />
           <Route path="/employer/find-talent" element={<ProductLayout roles={EMP}><FindTalent /></ProductLayout>} />

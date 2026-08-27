@@ -10,6 +10,7 @@ import Logo from "@/components/Logo";
 import { MatchRing, DimBar, Pill, VerifiedBadge, CheckLine } from "@/components/brand";
 import { useAuth, homeForRole } from "@/context/AuthContext";
 import api from "@/lib/api";
+import Seo, { ORG_JSONLD, WEBSITE_JSONLD, faqJsonLd } from "@/seo/Seo";
 
 const REVEAL = {
   hidden: { opacity: 0, y: 28 },
@@ -111,6 +112,15 @@ export default function Landing() {
 
   return (
     <div className="grain min-h-screen bg-cream overflow-x-hidden">
+      <Seo
+        title="ElevateMe — Talent Intelligence Marketplace"
+        description="Find the right talent. Get hired faster. ElevateMe connects U.S. employers with verified, role-matched professionals while helping candidates become genuinely hire-ready."
+        path="/"
+        jsonLd={[ORG_JSONLD, WEBSITE_JSONLD, faqJsonLd([
+          { q: "What is ElevateMe?", a: "ElevateMe is a Talent Intelligence Marketplace connecting U.S. employers with verified, role-matched professionals while helping candidates become genuinely hire-ready." },
+          { q: "How does ElevateMe match candidates?", a: "ElevateMe matches candidates to roles based on role requirements, verified skills, project evidence, assessments, experience, location and availability, producing an explainable score with reasons and risks." },
+        ])]}
+      />
       <Nav />
 
       {/* HERO */}
@@ -373,11 +383,33 @@ export default function Landing() {
       {/* FOOTER */}
       <footer className="relative z-10 border-t border-bordergray/60 py-12">
         <Section>
-          <div className="flex flex-col md:flex-row justify-between gap-6 items-start">
+          <div className="flex flex-col md:flex-row justify-between gap-8 items-start">
             <div><Logo size="text-3xl" /><p className="text-bodygray mt-3 max-w-xs">The talent intelligence marketplace. Build better talent, match better, place better.</p></div>
-            <div className="flex gap-12">
-              <div><p className="label-eyebrow text-charcoal mb-3">Product</p><ul className="space-y-2 text-bodygray text-sm"><li>Match Intelligence</li><li>Verified Talent</li><li>Career Readiness</li></ul></div>
-              <div><p className="label-eyebrow text-charcoal mb-3">Access</p><ul className="space-y-2 text-bodygray text-sm"><li><Link to="/login" className="hover:text-terracotta">Sign in</Link></li><li><Link to="/register" className="hover:text-terracotta">Get started</Link></li></ul></div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-8">
+              <div><p className="label-eyebrow text-charcoal mb-3">Explore</p><ul className="space-y-2 text-bodygray text-sm">
+                <li><Link to="/careers" className="hover:text-terracotta">Careers</Link></li>
+                <li><Link to="/jobs" className="hover:text-terracotta">Jobs</Link></li>
+                <li><Link to="/skills" className="hover:text-terracotta">Skills</Link></li>
+                <li><Link to="/market-insights" className="hover:text-terracotta">Market Insights</Link></li>
+              </ul></div>
+              <div><p className="label-eyebrow text-charcoal mb-3">Careers</p><ul className="space-y-2 text-bodygray text-sm">
+                <li><Link to="/careers/data-analyst" className="hover:text-terracotta">Data Analyst</Link></li>
+                <li><Link to="/careers/data-scientist" className="hover:text-terracotta">Data Scientist</Link></li>
+                <li><Link to="/careers/backend-engineer" className="hover:text-terracotta">Backend Engineer</Link></li>
+                <li><Link to="/skills/sql" className="hover:text-terracotta">SQL Guide</Link></li>
+              </ul></div>
+              <div><p className="label-eyebrow text-charcoal mb-3">Company</p><ul className="space-y-2 text-bodygray text-sm">
+                <li><Link to="/about" className="hover:text-terracotta">About</Link></li>
+                <li><Link to="/how-it-works" className="hover:text-terracotta">How It Works</Link></li>
+                <li><Link to="/methodology" className="hover:text-terracotta">Methodology</Link></li>
+                <li><Link to="/trust" className="hover:text-terracotta">Trust</Link></li>
+              </ul></div>
+              <div><p className="label-eyebrow text-charcoal mb-3">Access</p><ul className="space-y-2 text-bodygray text-sm">
+                <li><Link to="/for-students" className="hover:text-terracotta">For Students</Link></li>
+                <li><Link to="/for-employers" className="hover:text-terracotta">For Employers</Link></li>
+                <li><Link to="/login" className="hover:text-terracotta">Sign in</Link></li>
+                <li><Link to="/register" className="hover:text-terracotta">Get started</Link></li>
+              </ul></div>
             </div>
           </div>
           <p className="text-bodygray text-sm mt-10">© {new Date().getFullYear()} ElevateMe. A talent intelligence marketplace.</p>

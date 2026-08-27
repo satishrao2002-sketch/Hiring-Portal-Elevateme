@@ -557,9 +557,139 @@ async def admin_employers(user: dict = Depends(current_user)):
     return companies
 
 
+# ---------- Public SEO / discovery layer ----------
+import seo_content
+
+
+def _job_from_role(role, company):
+    return {
+        "id": role["id"], "title": role["title"], "seniority": role.get("seniority"),
+        "company": (company or {}).get("name", "ElevateMe Employer"),
+        "company_id": role.get("company_id"),
+        "location": role.get("location"), "work_model": role.get("work_model"),
+        "salary_min": role.get("salary_min"), "salary_max": role.get("salary_max"),
+        "must_have": role.get("must_have", []), "nice_to_have": role.get("nice_to_have", []),
+        "domain": role.get("domain"), "description": role.get("description"),
+        "experience_min": role.get("experience_min"),
+        "date_posted": (role.get("created_at") or now_iso())[:10],
+        "valid_through": "2026-12-31",
+        "employment_type": "FULL_TIME",
+    }
+
+
+@api.get("/seo/careers")
+async def seo_careers():
+    return [{"slug": c["slug"], "title": c["title"], "answer": c["answer"], "core_skills": c["core_skills"]}
+            for c in seo_content.CAREERS.values()]
+
+
+@api.get("/seo/careers/{slug}")
+async def seo_career(slug: str):
+    c = seo_content.CAREERS.get(slug)
+    if not c:
+        raise HTTPException(status_code=404, detail="Career guide not found")
+    roles = await db.roles.find({"title": {"$regex": c["title"], "$options": "i"}}, {"_id": 0}).to_list(50)
+    jobs = []
+    sal = []
+    for r in roles:
+        comp = await db.companies.find_one({"id": r["company_id"]}, {"_id": 0})
+        jobs.append(_job_from_role(r, comp))
+        if r.get("salary_min"):
+            sal += [r["salary_min"], r["salary_max"]]
+    salary_range = {"min": min(sal), "max": max(sal)} if sal else None
+    related = [{"slug": s, "title": seo_content.CAREERS[s]["title"]} for s in c.get("related_careers", []) if s in seo_content.CAREERS]
+    return {**c, "jobs": jobs, "salary_range": salary_range, "related": related}
+
+
+@api.get("/seo/skills")
+async def seo_skills():
+    return [{"slug": s["slug"], "name": s["name"], "answer": s["answer"]} for s in seo_content.SKILLS.values()]
+
+
+@api.get("/seo/skills/{slug}")
+async def seo_skill(slug: str):
+    s = seo_content.SKILLS.get(slug)
+    if not s:
+        raise HTTPException(status_code=404, detail="Skill not found")
+    roles = await db.roles.find({"must_have": {"$regex": f"^{s['name']}$", "$options": "i"}}, {"_id": 0}).to_list(50)
+    jobs = []
+    for r in roles:
+        comp = await db.companies.find_one({"id": r["company_id"]}, {"_id": 0})
+        jobs.append(_job_from_role(r, comp))
+    careers = [{"slug": rs, "title": seo_content.CAREERS[rs]["title"]} for rs in s.get("roles", []) if rs in seo_content.CAREERS]
+    return {**s, "jobs": jobs, "careers": careers}
+
+
+@api.get("/seo/locations")
+async def seo_locations():
+    return [{"slug": l["slug"], "name": l["name"]} for l in seo_content.LOCATIONS.values()]
+
+
+@api.get("/seo/locations/{slug}")
+async def seo_location(slug: str):
+    loc = seo_content.LOCATIONS.get(slug)
+    if not loc:
+        raise HTTPException(status_code=404, detail="Location not found")
+    roles = await db.roles.find({"location": {"$regex": loc["match"], "$options": "i"}}, {"_id": 0}).to_list(100)
+    jobs = []
+    for r in roles:
+        comp = await db.companies.find_one({"id": r["company_id"]}, {"_id": 0})
+        jobs.append(_job_from_role(r, comp))
+    cands = await db.candidates.find({"location": {"$regex": loc["match"], "$options": "i"}}, {"_id": 0}).to_list(50)
+    top_skills = {}
+    for c in cands:
+        for sk in c.get("skills", []):
+            top_skills[sk["name"]] = top_skills.get(sk["name"], 0) + 1
+    top = sorted(top_skills, key=top_skills.get, reverse=True)[:6]
+    return {**loc, "jobs": jobs, "talent_count": len(cands), "top_skills": top}
+
+
+@api.get("/seo/jobs")
+async def seo_jobs():
+    roles = await db.roles.find({}, {"_id": 0}).to_list(200)
+    out = []
+    for r in roles:
+        comp = await db.companies.find_one({"id": r["company_id"]}, {"_id": 0})
+        out.append(_job_from_role(r, comp))
+    return out
+
+
+@api.get("/seo/jobs/{job_id}")
+async def seo_job(job_id: str):
+    r = await db.roles.find_one({"id": job_id}, {"_id": 0})
+    if not r:
+        raise HTTPException(status_code=404, detail="Job not found")
+    comp = await db.companies.find_one({"id": r["company_id"]}, {"_id": 0})
+    job = _job_from_role(r, comp)
+    career_slug = next((k for k, v in seo_content.CAREERS.items() if v["title"].lower() == r["title"].lower()), None)
+    return {**job, "company_about": (comp or {}).get("about"), "career_slug": career_slug}
+
+
+@api.get("/seo/market-insights")
+async def seo_market_insights():
+    return [{"slug": m["slug"], "title": m["title"], "summary": m["summary"]} for m in seo_content.MARKET_REPORTS.values()]
+
+
+@api.get("/seo/market-insights/{slug}")
+async def seo_market_report(slug: str):
+    m = seo_content.MARKET_REPORTS.get(slug)
+    if not m:
+        raise HTTPException(status_code=404, detail="Report not found")
+    return m
+
+
+@api.get("/seo/companies/{company_id}")
+async def seo_company(company_id: str):
+    c = await db.companies.find_one({"id": company_id}, {"_id": 0})
+    if not c:
+        raise HTTPException(status_code=404, detail="Company not found")
+    roles = await db.roles.find({"company_id": company_id}, {"_id": 0}).to_list(50)
+    comp = await db.companies.find_one({"id": company_id}, {"_id": 0})
+    return {**c, "jobs": [_job_from_role(r, comp) for r in roles]}
+
+
 app.include_router(auth_router)
 app.include_router(api)
-
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,

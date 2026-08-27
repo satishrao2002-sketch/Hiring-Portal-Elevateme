@@ -1,0 +1,36 @@
+{
+  "summary": "Frontend-only E2E test of the new SEO/GEO/AEO public discovery layer. Verified 20 public routes render (H1 + content, zero JS page errors), per-page metadata via react-helmet-async, JSON-LD blocks (BreadcrumbList/FAQPage/Article/JobPosting/Organization/WebSite - all valid JSON), AEO answer blocks, FAQ expand, breadcrumbs, internal linking (skill chips, related careers, job cards, footer 26 links on every public page), jobs hub search filter, CTA -> /register, sitemap.xml + sitemap-pages.xml (31 <loc>), mobile 390x844 (no horizontal overflow), and auth regression (employer login -> /employer). Two real SEO defects found: duplicate canonical/description tags (static index.html not overridden by Helmet) and hub pages missing product-cta; plus homepage has zero internal links into the discovery layer.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "public/index.html + Seo.jsx", "issue": "index.html contains static <meta name=\"description\"> and <link rel=\"canonical\" href=\".../\"> without data-rh=\"true\", so react-helmet-async APPENDS its tags instead of replacing them. Every public page therefore ships TWO canonical tags (first/static one points to homepage '/') and TWO meta descriptions (first is the generic site one). Same for og:description and twitter:description. Crawlers reading the first match get the wrong canonical -> all discovery pages canonicalize to the homepage. Fix: remove those tags from index.html (or add data-rh=\"true\").", "selector": "link[rel=canonical], meta[name=description]", "priority": "HIGH"},
+      {"component": "Hub pages (Careers.jsx, Skills.jsx, Jobs.jsx, MarketInsights.jsx)", "issue": "Requirement 'Every public page has a data-testid=product-cta' fails on the 4 hub pages: /careers, /skills, /jobs, /market-insights have no product-cta (detail pages all have it). These hubs also have no answer-block.", "selector": "[data-testid=\"product-cta\"]", "priority": "MEDIUM"},
+      {"component": "Landing.jsx", "issue": "Homepage has ZERO links into the crawlable discovery layer (all anchors are #hash, /login, /register). Landing uses its own header/footer, not PublicLayout, so /careers, /skills, /jobs, /locations, /about... are orphan pages from the site root - weakens internal-link discovery even though they are in sitemap-pages.xml.", "selector": "footer a", "priority": "MEDIUM"},
+      {"component": "Login form", "issue": "Submit button has no type=\"submit\" and no data-testid (only accessible name 'Sign in'), making automated auth flows brittle.", "selector": "button[type=\"submit\"] (absent)", "priority": "LOW"},
+      {"component": "Jobs detail / Company page", "issue": "/jobs/{id} and /companies/{id} have no data-testid=answer-block (AEO direct answer) unlike career/skill/location/static pages. Not explicitly required but inconsistent for AEO coverage.", "selector": "[data-testid=\"answer-block\"]", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Landing header vs public header", "issues": ["Landing nav (Talent/Employers/How It Works/Match Intelligence/Outcomes) differs from public nav (Careers/Jobs/Skills/Insights/How It Works); 'How It Works' on landing goes to /#how while the public page /how-it-works exists - inconsistent destinations for the same label."]}
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "Remove (or mark data-rh=\"true\") the static meta description + canonical + og/twitter description in /app/frontend/public/index.html so Helmet's per-page tags are not duplicated; re-verify only ONE canonical per page matching the path.",
+    "Add ProductCta (and ideally an AnswerBlock) to the /careers, /skills, /jobs and /market-insights hub pages.",
+    "Add discovery-layer internal links (careers/skills/locations/company pages) to the landing page footer so hubs are reachable from '/'.",
+    "Add type=\"submit\" and data-testid to the login submit button."
+  ],
+  "critical_code_review_comments": [
+    "Seo.jsx cannot dedupe tags that pre-exist in index.html without data-rh markers - single source of truth for head tags should be the Seo component only.",
+    "Titles are unique across all 20 pages and JSON-LD is valid on every page tested; robots meta is correct ('index,follow,max-image-preview:large')."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "not tested (frontend-only request)", "frontend": "88%"},
+  "seed_data_creation": "none",
+  "should_call_test_agent_after_fix": true,
+  "should_main_agent_self_test": false,
+  "test_credentials": "employer@elevateme.com / Demo@123 - login works, lands on /employer",
+  "context_for_next_testing_agent": "Verified PASS: all 20 public routes render with unique titles + valid JSON-LD (careers detail = BreadcrumbList+FAQPage+Article, /jobs/role-acme-da = BreadcrumbList+JobPosting+FAQPage with title/hiringOrganization/datePosted/baseSalary, home = Organization+WebSite+FAQPage); answer-block present on career/skill/location/about/how-it-works/trust/methodology/ai/for-* pages; faq-0 expands on click; breadcrumbs link back to hub; skill chips -> /skills/*, related-* -> /careers/*, /skills/sql -> /jobs/role-acme-da & /jobs/role-helios-ds; jobs-search filters 3->1 for 'backend'; product-cta on /careers/data-analyst navigates to /register; sitemap.xml sitemapindex OK, sitemap-pages.xml urlset with exactly 31 <loc>; mobile 390x844 no overflow, Get Started visible; public nav links all resolve correctly (test from a public page, NOT from '/', since landing has a different nav). First job id: role-acme-da. After fixes, re-check canonical/description tag COUNT (must be 1 each) and hub product-cta.",
+  "rca_of_the_issue": "react-helmet-async only replaces head tags it manages (identified by data-rh); tags hard-coded in public/index.html lack that attribute, so both the static and the dynamic canonical/description coexist. The static canonical hard-codes the site root, so every discovery page presents a homepage canonical to the first-match parser."
+}

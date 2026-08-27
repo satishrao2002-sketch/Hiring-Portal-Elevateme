@@ -1,0 +1,26 @@
+{
+  "summary": "Re-verification (frontend only) of the 5 fixes from iteration_3 plus SEO/render regressions. ALL PASS. (1) HIGH duplicate canonical/description is fixed: /careers/data-analyst, /skills/sql, /jobs/role-acme-da and / each have EXACTLY 1 link[rel=canonical] (href == current page URL), 1 meta[name=description], 1 og:description, 1 twitter:description, 1 robots meta ('index,follow,max-image-preview:large'). (2) Hub pages /careers, /skills, /jobs, /market-insights all now render answer-block + product-cta; the /careers CTA ('Build Your Profile') navigates to /register. (3) Landing footer now links to /careers, /jobs, /skills, /market-insights, /about, /how-it-works (plus /careers/*, /skills/sql, /methodology, /trust, /for-*) and every one of the 6 required links navigates correctly and renders an H1. (4) /jobs/role-acme-da and /companies/acme-inc now show answer-block. (5) /login submit has data-testid=login-submit with type=submit and login as employer@elevateme.com lands on /employer. Regression: JSON-LD still valid and unique per page (careers detail = BreadcrumbList+FAQPage+Article, job = BreadcrumbList+JobPosting+FAQPage, company = BreadcrumbList+Organization, home = Organization+WebSite+FAQPage); 11 routes audited all have >=1 H1, exactly one canonical/description, unique titles, and ZERO JS page errors.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Landing header vs public header", "issues": ["Carried over from iteration_3 (not re-fixed, cosmetic): landing nav labels (Talent/Employers/How It Works/Match Intelligence/Outcomes) differ from public nav (Careers/Jobs/Skills/Insights/How It Works), and landing 'How It Works' points to /#how while the crawlable /how-it-works page exists."]}
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "ENVIRONMENT NOTE (not a code bug): the CRA dev bundle served at /static/js/bundle.js was stale for the last edits (Jobs.jsx JobDetail + Places.jsx CompanyPublic answer blocks were missing from the served bundle even though webpack logged 'Compiled successfully'). A `sudo supervisorctl restart frontend` made the code appear and the two LOW fixes then passed. If a fix appears 'not applied' during future verification, restart the frontend before reporting a defect.",
+    "Seo.jsx is now the single source of head tags (index.html only keeps charset/viewport/theme-color/og:site_name/title) - correct.",
+    "Home page (/) intentionally has no answer-block/product-cta (Landing has its own hero CTAs); acceptable, but adding an AnswerBlock on '/' would improve AEO consistency."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "not tested (frontend-only request)", "frontend": "100% (all 7 requested verification items pass)"},
+  "seed_data_creation": "none",
+  "should_call_test_agent_after_fix": false,
+  "should_main_agent_self_test": true,
+  "test_credentials": "employer@elevateme.com / Demo@123 - login OK, redirects to /employer",
+  "context_for_next_testing_agent": "Iteration_4 confirmed all iteration_3 defects fixed. Verified routes: /, /careers, /careers/data-analyst, /skills, /skills/sql, /jobs, /jobs/role-acme-da, /companies/acme-inc, /market-insights, /about, /how-it-works. Head-tag counting method: page.goto(wait_until='networkidle') + 2s wait, then document.querySelectorAll counts. Watch out for stale webpack bundles - verify with `curl <BASE>/static/js/bundle.js | grep <new string>` and restart frontend if missing. First job id: role-acme-da. Preview edge serves x-robots-tag noindex + its own robots.txt - ignore.",
+  "rca_of_the_issue": "Original HIGH issue (duplicate canonical/description) root cause was static tags in public/index.html lacking data-rh, so react-helmet-async appended rather than replaced. Removing them resolved it - now exactly one of each tag per page with the correct per-page href. The apparent failure of the job/company answer-block fix during this run was a stale CRA dev bundle, resolved by restarting the frontend service."
+}

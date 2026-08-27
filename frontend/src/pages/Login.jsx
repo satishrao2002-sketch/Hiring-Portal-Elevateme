@@ -57,7 +57,7 @@ export default function Login() {
                   className="w-full mt-1 bg-cream border border-bordergray rounded-lg px-4 py-3 outline-none focus:border-terracotta transition-colors" data-testid="login-password" />
               </div>
               {error && <p className="text-salmon text-sm font-bold" data-testid="login-error">{error}</p>}
-              <button disabled={loading} className="btn-primary rounded-lg w-full py-3 label-eyebrow inline-flex items-center justify-center gap-2 disabled:opacity-60" data-testid="login-submit">
+              <button type="submit" disabled={loading} className="btn-primary rounded-lg w-full py-3 label-eyebrow inline-flex items-center justify-center gap-2 disabled:opacity-60" data-testid="login-submit">
                 {loading ? "Signing in..." : <>Sign in <ArrowRight size={16} /></>}
               </button>
             </form>
