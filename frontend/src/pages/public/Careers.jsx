@@ -4,29 +4,39 @@ import api from "@/lib/api";
 import { Loading } from "@/components/brand";
 import PublicLayout, { Breadcrumbs } from "@/components/public/PublicLayout";
 import Seo, { breadcrumbJsonLd, faqJsonLd, SITE } from "@/seo/Seo";
-import { AnswerBlock, Section, FaqList, JobCard, RelatedLinks, ProductCta, PageWrap, HubWrap } from "@/components/public/parts";
+import { AnswerBlock, Section, FaqList, JobCard, RelatedLinks, ProductCta, PageWrap, HubWrap, SkillChips } from "@/components/public/parts";
+import NotFound from "@/pages/public/NotFound";
 
 export function CareersHub() {
   const [items, setItems] = useState(null);
   useEffect(() => { api.get("/seo/careers").then((r) => setItems(r.data)).catch(() => setItems([])); }, []);
+  const grouped = items ? items.reduce((acc, c) => { (acc[c.category] = acc[c.category] || []).push(c); return acc; }, {}) : {};
+  const categories = Object.keys(grouped);
   return (
     <PublicLayout>
-      <Seo title="Career Guides — Roles, Skills, Salary & Paths | ElevateMe"
-        description="Explore in-depth U.S. career guides for data, analytics and engineering roles: what each role does, required skills, salary context, interview topics and how to get hired."
+      <Seo title="Career Guides Across Every Industry — Skills, Salary & Paths | ElevateMe"
+        description="Explore in-depth U.S. career guides across technology, AI, data, cybersecurity, business, finance, healthcare, marketing and design: what each role does, required skills, salary context and how to get hired."
         path="/careers" jsonLd={[breadcrumbJsonLd([{ name: "Home", path: "/" }, { name: "Careers", path: "/careers" }])]} />
       <HubWrap>
         <p className="label-eyebrow text-terracotta">Career Guides</p>
         <h1 className="font-display text-4xl md:text-5xl text-charcoal">Find the career that fits you.</h1>
-        <p className="text-bodygray mt-3 max-w-2xl mb-6">Honest, structured guides to the roles ElevateMe hires for — what they do, the skills employers expect, typical paths, and how to become genuinely hire-ready.</p>
-        <AnswerBlock question="What career guides does ElevateMe offer?" answer="ElevateMe publishes evidence-based guides for in-demand U.S. roles including Data Analyst, Data Scientist, Backend Engineer, Business Analyst and BI Analyst — each covering responsibilities, required skills, salary context, career path and interview topics." />
+        <p className="text-bodygray mt-3 max-w-2xl mb-6">Honest, structured guides across every professional field — technology, AI & data, cybersecurity, business, finance, healthcare, marketing and design. Whatever your degree, understand what a role does, the skills employers expect, and how to become genuinely hire-ready.</p>
+        <AnswerBlock question="What career guides does ElevateMe offer?" answer={`ElevateMe publishes evidence-based guides for ${items ? items.length : "40+"} U.S. careers across ${categories.length || 11} industries — from Data Scientist, AI Engineer and Cybersecurity Analyst to Financial Analyst, Product Manager, Registered Nurse and UX Designer. Each guide covers responsibilities, required skills, salary context, career path and interview topics.`} />
         {!items ? <Loading label="Loading career guides..." /> : (
-          <div className="grid md:grid-cols-2 gap-4 mt-8">
-            {items.map((c) => (
-              <Link key={c.slug} to={`/careers/${c.slug}`} className="bg-white border border-bordergray rounded-xl p-6 card-hover" data-testid={`career-${c.slug}`}>
-                <h2 className="font-display text-2xl text-charcoal">{c.title}</h2>
-                <p className="text-bodygray text-sm mt-2 line-clamp-3">{c.answer}</p>
-                <p className="text-sm text-bodygray mt-3">Core: {c.core_skills.slice(0, 4).join(" · ")}</p>
-              </Link>
+          <div className="mt-8 space-y-10">
+            {categories.map((cat) => (
+              <div key={cat} data-testid={`career-category-${cat.toLowerCase().replace(/[^a-z]+/g, "-")}`}>
+                <h2 className="font-display text-2xl text-charcoal mb-4 flex items-center gap-3"><span className="w-6 h-px bg-terracotta" />{cat}</h2>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {grouped[cat].map((c) => (
+                    <Link key={c.slug} to={`/careers/${c.slug}`} className="bg-white border border-bordergray rounded-xl p-5 card-hover" data-testid={`career-${c.slug}`}>
+                      <h3 className="font-display text-xl text-charcoal">{c.title}</h3>
+                      <p className="text-bodygray text-sm mt-2 line-clamp-2">{c.answer}</p>
+                      <p className="text-xs text-bodygray mt-3">Core: {c.core_skills.slice(0, 3).join(" · ")}</p>
+                    </Link>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         )}
@@ -42,13 +52,15 @@ export function CareerDetail() {
   const [d, setD] = useState(null);
   const [err, setErr] = useState(false);
   useEffect(() => { setD(null); api.get(`/seo/careers/${slug}`).then((r) => setD(r.data)).catch(() => setErr(true)); }, [slug]);
-  if (err) return <PublicLayout><HubWrap><h1 className="font-display text-3xl">Guide not found</h1><Link to="/careers" className="text-terracotta font-bold">Back to careers</Link></HubWrap></PublicLayout>;
+  if (err) return <NotFound />;
   if (!d) return <PublicLayout><Loading label="Loading career guide..." /></PublicLayout>;
 
+  const sal = d.salary_range || d.salary_us;
+  const salIllustrative = !d.salary_range && !!d.salary_us;
   const faqs = [
     { q: `What does a ${d.title} do?`, a: d.answer },
     { q: `What skills does a ${d.title} need?`, a: `Core skills include ${d.core_skills.join(", ")}. Employers increasingly value verified evidence — projects, assessments and portfolios — over self-reported skill lists.` },
-    { q: `What is the typical salary for a ${d.title}?`, a: d.salary_range ? `Based on ${d.title} roles currently on ElevateMe, advertised ranges fall roughly between $${Math.round(d.salary_range.min / 1000)}k and $${Math.round(d.salary_range.max / 1000)}k. Ranges vary by location, seniority and industry (see our methodology).` : `Salary varies by location, seniority and industry.` },
+    { q: `What is the typical salary for a ${d.title}?`, a: sal ? `${d.salary_range ? `Based on ${d.title} roles currently on ElevateMe, advertised ranges` : `Illustrative U.S. pay for a ${d.title}`} fall roughly between $${Math.round(sal.min / 1000)}k and $${Math.round(sal.max / 1000)}k. Ranges vary by location, seniority and industry (see our methodology).` : `Salary varies by location, seniority and industry.` },
     { q: `How do I become a ${d.title}?`, a: `${d.education} Build verifiable evidence (projects, a portfolio, assessments), then use ElevateMe to see which roles you match and what to improve.` },
   ];
   const crumbs = [{ name: "Home", path: "/" }, { name: "Careers", path: "/careers" }, { name: d.title, path: `/careers/${slug}` }];
@@ -73,12 +85,7 @@ export function CareerDetail() {
         </Section>
 
         <Section title="Core skills">
-          <div className="flex flex-wrap gap-2">
-            {d.core_skills.map((s) => {
-              const skillSlug = s.toLowerCase().replace(/\s+/g, "-");
-              return <Link key={s} to={`/skills/${skillSlug}`} className="bg-white border border-bordergray rounded-full px-4 py-2 text-sm font-bold hover:border-terracotta hover:text-terracotta transition-colors">{s}</Link>;
-            })}
-          </div>
+          <SkillChips skills={d.core_skills_linked || d.core_skills} />
         </Section>
 
         <Section title="Education & typical path">
@@ -93,11 +100,11 @@ export function CareerDetail() {
           </div>
         </Section>
 
-        {d.salary_range && (
+        {sal && (
           <Section title="Salary context">
             <div className="bg-white border border-bordergray rounded-xl p-6">
-              <p className="font-display text-3xl text-charcoal">${Math.round(d.salary_range.min / 1000)}k – ${Math.round(d.salary_range.max / 1000)}k</p>
-              <p className="text-sm text-bodygray mt-1">Illustrative range based on {d.title} roles currently on ElevateMe. See our <Link to="/methodology" className="text-terracotta font-bold">methodology</Link>.</p>
+              <p className="font-display text-3xl text-charcoal">${Math.round(sal.min / 1000)}k – ${Math.round(sal.max / 1000)}k</p>
+              <p className="text-sm text-bodygray mt-1">{salIllustrative ? `Illustrative U.S. range for a ${d.title}, shown as general context.` : `Illustrative range based on ${d.title} roles currently on ElevateMe.`} Pay varies by location, seniority and industry — see our <Link to="/methodology" className="text-terracotta font-bold">methodology</Link>.</p>
             </div>
           </Section>
         )}

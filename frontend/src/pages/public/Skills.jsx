@@ -5,27 +5,37 @@ import { Loading } from "@/components/brand";
 import PublicLayout, { Breadcrumbs } from "@/components/public/PublicLayout";
 import Seo, { breadcrumbJsonLd, faqJsonLd, SITE } from "@/seo/Seo";
 import { AnswerBlock, Section, FaqList, JobCard, RelatedLinks, ProductCta, PageWrap, HubWrap } from "@/components/public/parts";
+import NotFound from "@/pages/public/NotFound";
 
 export function SkillsHub() {
   const [items, setItems] = useState(null);
   useEffect(() => { api.get("/seo/skills").then((r) => setItems(r.data)).catch(() => setItems([])); }, []);
+  const grouped = items ? items.reduce((acc, s) => { (acc[s.category] = acc[s.category] || []).push(s); return acc; }, {}) : {};
+  const categories = Object.keys(grouped);
   return (
     <PublicLayout>
-      <Seo title="In-Demand Tech Skills — Guides, Jobs & Careers | ElevateMe"
-        description="Guides to the most in-demand U.S. tech skills — what each skill is, where it's used, which roles require it and how to build verifiable evidence."
+      <Seo title="In-Demand Skills Across Every Industry — Guides, Jobs & Careers | ElevateMe"
+        description="Guides to the most in-demand U.S. skills across technology, AI, data, cybersecurity, business, finance, marketing and design — what each skill is, where it's used, which roles need it and how to build verifiable evidence."
         path="/skills" jsonLd={[breadcrumbJsonLd([{ name: "Home", path: "/" }, { name: "Skills", path: "/skills" }])]} />
       <HubWrap>
         <p className="label-eyebrow text-terracotta">Skills</p>
         <h1 className="font-display text-4xl md:text-5xl text-charcoal">Skills that get you hired.</h1>
-        <p className="text-bodygray mt-3 max-w-2xl mb-6">Understand the skills employers actually request — and how ElevateMe verifies them through projects, assessments and evidence.</p>
-        <AnswerBlock question="Which skills matter most for U.S. tech jobs?" answer="For analytics roles, SQL, Python and a BI tool (Power BI or Tableau) are the most requested; for engineering roles, Python, a web framework and a cloud platform like AWS lead. ElevateMe verifies these through projects, assessments and portfolios rather than self-reported claims." />
+        <p className="text-bodygray mt-3 max-w-2xl mb-6">Understand the skills employers actually request across every professional field — and how ElevateMe verifies them through projects, assessments and evidence.</p>
+        <AnswerBlock question="Which skills matter most for U.S. jobs?" answer="It depends on the field: Python, SQL, machine learning and AI lead in data and tech; communication, project management and leadership span every industry; and role-specific skills like financial modeling, digital marketing, Figma and clinical assessment matter in their domains. ElevateMe verifies skills through projects, assessments and portfolios rather than self-reported claims." />
         {!items ? <Loading label="Loading skills..." /> : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
-            {items.map((s) => (
-              <Link key={s.slug} to={`/skills/${s.slug}`} className="bg-white border border-bordergray rounded-xl p-5 card-hover" data-testid={`skill-${s.slug}`}>
-                <h2 className="font-display text-xl text-charcoal">{s.name}</h2>
-                <p className="text-bodygray text-sm mt-2 line-clamp-3">{s.answer}</p>
-              </Link>
+          <div className="mt-8 space-y-10">
+            {categories.map((cat) => (
+              <div key={cat} data-testid={`skill-category-${cat.toLowerCase().replace(/[^a-z]+/g, "-")}`}>
+                <h2 className="font-display text-2xl text-charcoal mb-4 flex items-center gap-3"><span className="w-6 h-px bg-terracotta" />{cat}</h2>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {grouped[cat].map((s) => (
+                    <Link key={s.slug} to={`/skills/${s.slug}`} className="bg-white border border-bordergray rounded-xl p-5 card-hover" data-testid={`skill-${s.slug}`}>
+                      <h3 className="font-display text-xl text-charcoal">{s.name}</h3>
+                      <p className="text-bodygray text-sm mt-2 line-clamp-3">{s.answer}</p>
+                    </Link>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
         )}
@@ -41,7 +51,7 @@ export function SkillDetail() {
   const [d, setD] = useState(null);
   const [err, setErr] = useState(false);
   useEffect(() => { setD(null); api.get(`/seo/skills/${slug}`).then((r) => setD(r.data)).catch(() => setErr(true)); }, [slug]);
-  if (err) return <PublicLayout><HubWrap><h1 className="font-display text-3xl">Skill not found</h1><Link to="/skills" className="text-terracotta font-bold">Back to skills</Link></HubWrap></PublicLayout>;
+  if (err) return <NotFound />;
   if (!d) return <PublicLayout><Loading label="Loading skill guide..." /></PublicLayout>;
 
   const faqs = [

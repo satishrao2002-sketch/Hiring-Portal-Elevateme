@@ -559,6 +559,17 @@ async def admin_employers(user: dict = Depends(current_user)):
 
 # ---------- Public SEO / discovery layer ----------
 import seo_content
+import re as _re
+
+
+def _slugify(s):
+    return _re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-")
+
+
+def _skill_links(names):
+    """Turn skill names into {name, slug, has_guide} so the UI only links to
+    skill pages that actually exist (no soft-404 internal links)."""
+    return [{"name": n, "slug": _slugify(n), "has_guide": _slugify(n) in seo_content.SKILLS} for n in names]
 
 
 def _job_from_role(role, company):
@@ -579,7 +590,8 @@ def _job_from_role(role, company):
 
 @api.get("/seo/careers")
 async def seo_careers():
-    return [{"slug": c["slug"], "title": c["title"], "answer": c["answer"], "core_skills": c["core_skills"]}
+    return [{"slug": c["slug"], "title": c["title"], "answer": c["answer"],
+             "core_skills": c["core_skills"], "category": c.get("category", "Other")}
             for c in seo_content.CAREERS.values()]
 
 
@@ -598,12 +610,14 @@ async def seo_career(slug: str):
             sal += [r["salary_min"], r["salary_max"]]
     salary_range = {"min": min(sal), "max": max(sal)} if sal else None
     related = [{"slug": s, "title": seo_content.CAREERS[s]["title"]} for s in c.get("related_careers", []) if s in seo_content.CAREERS]
-    return {**c, "jobs": jobs, "salary_range": salary_range, "related": related}
+    return {**c, "jobs": jobs, "salary_range": salary_range, "related": related,
+            "core_skills_linked": _skill_links(c["core_skills"])}
 
 
 @api.get("/seo/skills")
 async def seo_skills():
-    return [{"slug": s["slug"], "name": s["name"], "answer": s["answer"]} for s in seo_content.SKILLS.values()]
+    return [{"slug": s["slug"], "name": s["name"], "answer": s["answer"], "category": s.get("category", "Other")}
+            for s in seo_content.SKILLS.values()]
 
 
 @api.get("/seo/skills/{slug}")
@@ -622,7 +636,7 @@ async def seo_skill(slug: str):
 
 @api.get("/seo/locations")
 async def seo_locations():
-    return [{"slug": l["slug"], "name": l["name"]} for l in seo_content.LOCATIONS.values()]
+    return [{"slug": l["slug"], "name": l["name"], "top": l.get("top", False)} for l in seo_content.LOCATIONS.values()]
 
 
 @api.get("/seo/locations/{slug}")
@@ -642,6 +656,62 @@ async def seo_location(slug: str):
             top_skills[sk["name"]] = top_skills.get(sk["name"], 0) + 1
     top = sorted(top_skills, key=top_skills.get, reverse=True)[:6]
     return {**loc, "jobs": jobs, "talent_count": len(cands), "top_skills": top}
+
+
+@api.get("/seo/location-careers")
+async def seo_location_careers():
+    """All role x city combinations for the location-career guides (sitemap + hub)."""
+    out = []
+    for c in seo_content.CAREERS.values():
+        for loc in seo_content.LOCATIONS.values():
+            out.append({
+                "career_slug": c["slug"], "career_title": c["title"],
+                "location_slug": loc["slug"], "location_name": loc["name"],
+                "path": f"/careers/{c['slug']}/in/{loc['slug']}",
+                "title": f"{c['title']} in {loc['name']}",
+            })
+    return out
+
+
+@api.get("/seo/careers/{career_slug}/in/{location_slug}")
+async def seo_location_career(career_slug: str, location_slug: str):
+    c = seo_content.CAREERS.get(career_slug)
+    loc = seo_content.LOCATIONS.get(location_slug)
+    if not c or not loc:
+        raise HTTPException(status_code=404, detail="Location career guide not found")
+    # roles matching both the career title and the location
+    roles = await db.roles.find(
+        {"title": {"$regex": c["title"], "$options": "i"},
+         "location": {"$regex": loc["match"], "$options": "i"}}, {"_id": 0}).to_list(50)
+    # fallback: all roles for this career (any location) to still show context
+    all_career_roles = await db.roles.find(
+        {"title": {"$regex": c["title"], "$options": "i"}}, {"_id": 0}).to_list(50)
+    jobs, sal = [], []
+    for r in roles:
+        comp = await db.companies.find_one({"id": r["company_id"]}, {"_id": 0})
+        jobs.append(_job_from_role(r, comp))
+    for r in all_career_roles:
+        if r.get("salary_min"):
+            sal += [r["salary_min"], r["salary_max"]]
+    salary_range = {"min": min(sal), "max": max(sal)} if sal else None
+    # local candidates for this role family in this location
+    cands = await db.candidates.find(
+        {"title": {"$regex": c["title"], "$options": "i"},
+         "location": {"$regex": loc["match"], "$options": "i"}}, {"_id": 0}).to_list(50)
+    local_all = await db.candidates.find({"location": {"$regex": loc["match"], "$options": "i"}}, {"_id": 0}).to_list(100)
+    other_locations = [{"slug": x["slug"], "name": x["name"]} for x in seo_content.LOCATIONS.values() if x["slug"] != location_slug]
+    related_careers = [{"slug": s, "title": seo_content.CAREERS[s]["title"]} for s in c.get("related_careers", []) if s in seo_content.CAREERS]
+    return {
+        "career": {"slug": c["slug"], "title": c["title"], "answer": c["answer"],
+                   "core_skills": c["core_skills"], "responsibilities": c["responsibilities"],
+                   "interview_topics": c["interview_topics"], "path": c["path"], "education": c["education"],
+                   "category": c.get("category", "Other"), "salary_us": c.get("salary_us"),
+                   "core_skills_linked": _skill_links(c["core_skills"])},
+        "location": {"slug": loc["slug"], "name": loc["name"]},
+        "jobs": jobs, "salary_range": salary_range,
+        "local_talent_count": len(cands), "location_talent_count": len(local_all),
+        "other_locations": other_locations, "related_careers": related_careers,
+    }
 
 
 @api.get("/seo/jobs")
@@ -667,11 +737,66 @@ async def seo_job(job_id: str):
 
 @api.get("/seo/market-insights")
 async def seo_market_insights():
-    return [{"slug": m["slug"], "title": m["title"], "summary": m["summary"]} for m in seo_content.MARKET_REPORTS.values()]
+    items = [{"slug": seo_content.LIVE_REPORT_META["slug"], "title": seo_content.LIVE_REPORT_META["title"],
+              "summary": seo_content.LIVE_REPORT_META["summary"], "live": True}]
+    items += [{"slug": m["slug"], "title": m["title"], "summary": m["summary"]} for m in seo_content.MARKET_REPORTS.values()]
+    return items
+
+
+async def _compute_live_report():
+    cands = await db.candidates.find({}, {"_id": 0}).to_list(500)
+    roles = await db.roles.find({}, {"_id": 0}).to_list(500)
+    companies = await db.companies.count_documents({})
+    ready = [c for c in cands if c.get("interview_ready")]
+    ready_pct = round(100 * len(ready) / len(cands)) if cands else 0
+    # skill demand from role requirements
+    skill_counts = {}
+    for r in roles:
+        for s in r.get("must_have", []):
+            skill_counts[s] = skill_counts.get(s, 0) + 1
+    skill_demand = [{"skill": k, "count": v, "slug": k.lower().replace(" ", "-")}
+                    for k, v in sorted(skill_counts.items(), key=lambda x: x[1], reverse=True)][:8]
+    # role demand
+    role_counts = {}
+    for r in roles:
+        role_counts[r["title"]] = role_counts.get(r["title"], 0) + 1
+    role_demand = [{"role": k, "count": v} for k, v in sorted(role_counts.items(), key=lambda x: x[1], reverse=True)][:6]
+    # active hiring locations
+    loc_counts = {}
+    for r in roles:
+        loc = (r.get("location") or "Remote").split(",")[0].strip()
+        loc_counts[loc] = loc_counts.get(loc, 0) + 1
+    top_locations = [{"location": k, "count": v} for k, v in sorted(loc_counts.items(), key=lambda x: x[1], reverse=True)][:6]
+    top_skill = skill_demand[0]["skill"] if skill_demand else "SQL"
+    m = seo_content.LIVE_REPORT_META
+    generated = now_iso()[:10]
+    return {
+        "slug": m["slug"], "title": m["title"], "summary": m["summary"], "live": True,
+        "generated_on": generated,
+        "answer": f"As of {generated}, ElevateMe lists {len(roles)} open roles across {companies} employers, with {len(cands)} verified candidates. The single most-requested skill is {top_skill}, and {ready_pct}% of candidates are currently interview-ready. Employers increasingly weight verified evidence — projects and assessments — over self-reported skill lists.",
+        "stats": [
+            {"label": "Open roles", "value": len(roles)},
+            {"label": "Verified candidates", "value": len(cands)},
+            {"label": "Active employers", "value": companies},
+            {"label": "Interview-ready", "value": f"{ready_pct}%"},
+        ],
+        "skill_demand": skill_demand,
+        "role_demand": role_demand,
+        "top_locations": top_locations,
+        "findings": [
+            f"{top_skill} is currently the most-requested skill across open roles.",
+            f"{ready_pct}% of verified candidates are interview-ready right now.",
+            f"Employers are actively hiring across {len(top_locations)} U.S. locations, including remote.",
+            "Verified project evidence continues to be the strongest signal in shortlisting.",
+        ],
+        "methodology": "Figures are computed live from aggregated, privacy-safe signals on the ElevateMe platform (open roles, verified candidate profiles and requested skills). They are illustrative of current platform activity, not a national statistical survey. No confidential candidate or employer data is exposed.",
+    }
 
 
 @api.get("/seo/market-insights/{slug}")
 async def seo_market_report(slug: str):
+    if slug == seo_content.LIVE_REPORT_META["slug"]:
+        return await _compute_live_report()
     m = seo_content.MARKET_REPORTS.get(slug)
     if not m:
         raise HTTPException(status_code=404, detail="Report not found")
@@ -703,6 +828,15 @@ app.add_middleware(
 async def startup():
     await seed_admin(db)
     await db.users.create_index("email", unique=True)
+    # Version-gated reseed: when SEED_VERSION changes, refresh companies + roles so
+    # the demo marketplace reflects the latest catalog (idempotent otherwise).
+    meta = await db.seed_meta.find_one({"_id": "seed"})
+    seed_version = (meta or {}).get("version", 0)
+    reseed = seed_version != seed_data.SEED_VERSION
+    if reseed:
+        await db.companies.delete_many({})
+        await db.roles.delete_many({})
+        await db.seed_meta.update_one({"_id": "seed"}, {"$set": {"version": seed_data.SEED_VERSION}}, upsert=True)
     if await db.candidates.count_documents({}) == 0:
         await db.candidates.insert_many([dict(c) for c in seed_data.CANDIDATES])
     if await db.companies.count_documents({}) == 0:

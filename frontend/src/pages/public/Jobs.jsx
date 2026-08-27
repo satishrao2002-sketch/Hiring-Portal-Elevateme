@@ -6,25 +6,51 @@ import { Loading, Pill } from "@/components/brand";
 import PublicLayout, { Breadcrumbs } from "@/components/public/PublicLayout";
 import Seo, { breadcrumbJsonLd, faqJsonLd, SITE } from "@/seo/Seo";
 import { AnswerBlock, Section, FaqList, JobCard, RelatedLinks, ProductCta, PageWrap, HubWrap } from "@/components/public/parts";
+import NotFound from "@/pages/public/NotFound";
 
 export function JobsHub() {
   const [items, setItems] = useState(null);
+  const [careers, setCareers] = useState([]);
   const [q, setQ] = useState("");
-  useEffect(() => { api.get("/seo/jobs").then((r) => setItems(r.data)).catch(() => setItems([])); }, []);
-  const filtered = (items || []).filter((j) => !q || j.title.toLowerCase().includes(q.toLowerCase()) || (j.must_have || []).some((s) => s.toLowerCase().includes(q.toLowerCase())) || j.location.toLowerCase().includes(q.toLowerCase()));
+  useEffect(() => {
+    api.get("/seo/jobs").then((r) => setItems(r.data)).catch(() => setItems([]));
+    api.get("/seo/careers").then((r) => setCareers(r.data)).catch(() => setCareers([]));
+  }, []);
+  const ql = q.trim().toLowerCase();
+  const match = (txt) => txt && txt.toLowerCase().includes(ql);
+  const filtered = (items || []).filter((j) => !ql || match(j.title) || (j.must_have || []).some((s) => match(s)) || match(j.location));
+  const matchedCareers = ql ? careers.filter((c) => match(c.title) || (c.core_skills || []).some((s) => match(s)) || match(c.answer)).slice(0, 8) : [];
   return (
     <PublicLayout>
-      <Seo title="Browse Verified Tech & Analytics Jobs | ElevateMe"
-        description="Explore verified, role-matched U.S. jobs in data, analytics and engineering. See requirements, salary context and how well you match."
+      <Seo title="Browse Verified Jobs — Data, AI, Engineering, Business & More | ElevateMe"
+        description="Explore verified, role-matched U.S. jobs across data, AI, software, cybersecurity, business, finance, marketing and design. See requirements, salary context and how well you match."
         path="/jobs" jsonLd={[breadcrumbJsonLd([{ name: "Home", path: "/" }, { name: "Jobs", path: "/jobs" }])]} />
       <HubWrap>
         <p className="label-eyebrow text-terracotta">Jobs</p>
         <h1 className="font-display text-4xl md:text-5xl text-charcoal">Roles where you're competitive.</h1>
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by role, skill or location…"
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by role, skill or location — e.g. machine learning, cybersecurity, New York…"
           className="w-full max-w-lg mt-5 bg-white border border-bordergray rounded-lg px-4 py-3 outline-none focus:border-terracotta transition-colors" data-testid="jobs-search" />
-        <div className="mt-6"><AnswerBlock question="What kinds of jobs are on ElevateMe?" answer="ElevateMe lists verified, role-matched U.S. roles in data, analytics and engineering. Each job shows requirements, salary context and — once you build a profile — how well you match, with evidence-based reasons." /></div>
+        <div className="mt-6"><AnswerBlock question="What kinds of jobs are on ElevateMe?" answer="ElevateMe lists verified, role-matched U.S. jobs across data, AI and machine learning, software engineering, cybersecurity, cloud, product, business, finance, marketing and design. Each job shows requirements, salary context and — once you build a profile — how well you match, with evidence-based reasons." /></div>
         {!items ? <Loading label="Finding verified jobs..." /> : (
-          <div className="grid md:grid-cols-2 gap-4 mt-6">{filtered.map((j) => <JobCard key={j.id} job={j} />)}</div>
+          <>
+            {filtered.length > 0 && (
+              <div className="grid md:grid-cols-2 gap-4 mt-6" data-testid="jobs-results">{filtered.map((j) => <JobCard key={j.id} job={j} />)}</div>
+            )}
+            {ql && filtered.length === 0 && (
+              <div className="mt-6 bg-white border border-bordergray rounded-xl p-6" data-testid="jobs-empty">
+                <p className="text-charcoal font-bold">No open roles match "{q}" right now.</p>
+                <p className="text-bodygray text-sm mt-1">New roles are posted regularly. {matchedCareers.length > 0 ? "Meanwhile, explore these career guides to prepare and get matched automatically:" : "Build a verified profile to be matched the moment a fitting role opens."}</p>
+              </div>
+            )}
+            {matchedCareers.length > 0 && (
+              <div className="mt-4">
+                {filtered.length > 0 && <h2 className="font-display text-2xl text-charcoal mb-3">Related career guides</h2>}
+                <div className="flex flex-wrap gap-2" data-testid="jobs-career-suggestions">
+                  {matchedCareers.map((c) => <Link key={c.slug} to={`/careers/${c.slug}`} className="bg-white border border-bordergray rounded-full px-4 py-2 text-sm font-bold text-charcoal hover:border-terracotta hover:text-terracotta transition-colors" data-testid={`job-career-${c.slug}`}>{c.title}</Link>)}
+                </div>
+              </div>
+            )}
+          </>
         )}
         <ProductCta heading="See how well you match" sub="Build a verified profile to unlock your match score and evidence-based reasons on every role."
           primary="Build Your Profile" primaryTo="/register" secondary="Explore Careers" secondaryTo="/careers" />
@@ -38,7 +64,7 @@ export function JobDetail() {
   const [d, setD] = useState(null);
   const [err, setErr] = useState(false);
   useEffect(() => { setD(null); api.get(`/seo/jobs/${id}`).then((r) => setD(r.data)).catch(() => setErr(true)); }, [id]);
-  if (err) return <PublicLayout><HubWrap><h1 className="font-display text-3xl">Job not found</h1><Link to="/jobs" className="text-terracotta font-bold">Back to jobs</Link></HubWrap></PublicLayout>;
+  if (err) return <NotFound />;
   if (!d) return <PublicLayout><Loading label="Loading job..." /></PublicLayout>;
 
   const crumbs = [{ name: "Home", path: "/" }, { name: "Jobs", path: "/jobs" }, { name: d.title, path: `/jobs/${id}` }];

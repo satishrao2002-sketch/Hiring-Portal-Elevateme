@@ -1,0 +1,37 @@
+{
+  "summary": "Iteration 8 retest of the iteration_7 cleanup fixes (footer dead-link, skilled-trades copy, NotFound routing, backend stale-slug sanitization) plus light regression on jobs search / careers hub / career detail and an auth sanity pass. ALL reported items are FIXED. Backend: 34/34 pytest assertions pass across /app/backend/tests/test_iteration8_cleanup.py (28) and test_iteration8_auth_sanity.py (6). Footer target slugs (5 careers, 5 skills, 5 locations) all return 200; every career detail 'related_careers'/'related' and every skill 'roles'/'careers' cross-reference now resolves to a live career slug (stale bookkeeper/warehouse-manager/logistics-coordinator/medical-assistant/customer-support-specialist refs gone — verified by exhaustively crawling all 42 career + 48 skill detail endpoints); unknown slugs (careers/electrician, careers/zzz-nope, skills/zzz-nope, jobs/zzz-nope, locations/zzz-nope) all 404; no _id leakage; /api/seo/jobs = 31 with ML Engineer roles; careers catalog has no 'Skilled Trades' category and Technology & Data contains ai-engineer, ml-engineer, data-scientist, cybersecurity-analyst, data-engineer. Frontend: footer 'Careers' column = Data Scientist / AI Engineer / Cybersecurity Analyst / Financial Analyst / Product Manager (no /careers/electrician anywhere in footer hrefs); all 10 footer career+skill links render real guides with correct H1 and zero not-found. /careers, /skills and /locations/chicago-il copy contain no 'skilled trades', 'the trades' or 'Electrician'. All 6 unknown-slug URLs render the shared NotFound (data-testid='not-found', h1 \"We couldn't find that page.\", 3 suggestion chips, no bare 'Guide not found'). Jobs regression: 31 cards default -> 'machine' = 6 ML roles -> 'nurse' = jobs-empty state + registered-nurse career chip -> clear = 31. /careers/ai-engineer and /careers/data-scientist show populated 'Open <title> roles on ElevateMe' sections (2 job links each) and skill chips that all link to existing guides.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "/careers hub (content, non-blocking)", "issues": ["Two categories now contain a single guide each after the blue-collar removal: 'Operations & Supply Chain' (supply-chain-analyst) and 'Customer Success & Support' (customer-success-manager). Consider merging or adding 1-2 guides so the grouped grid doesn't show orphan single-chip categories."]},
+      {"screen": "/locations/chicago-il (content, non-blocking)", "issues": ["'Explore careers in Chicago' chips are the legacy generalist set (Data Analyst, Accountant, Registered Nurse, Teacher, Graphic Designer...) and don't surface the new AI/Data/Cybersecurity guides the intro paragraph advertises."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration8_cleanup.py",
+    "/app/backend/tests/test_iteration8_auth_sanity.py",
+    "/app/test_reports/pytest/iteration8.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "The sanitization pass in seo_content.py (lines ~648-653) filters related_careers and SKILLS[*].roles at import time — correct and verified live. Note the underlying literal lists still contain deleted slugs (e.g. CAREERS['accountant'].related_careers -> 'bookkeeper', SUPPLY_CHAIN skills -> 'warehouse-manager'); the filter hides them, but pruning the source data would remove the silent drift.",
+    "NotFound is now reused by Careers.jsx, Skills.jsx, Jobs.jsx and Places.jsx (3 branches) instead of inline fallbacks — good DRY/testability outcome, keep this pattern for future detail pages.",
+    "seo_content.py is 711 lines of mostly data literals; if it keeps growing, split into careers.py / skills.py / locations.py to stay under the 700-line guideline."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration8_cleanup.py",
+    "/app/backend/tests/test_iteration8_auth_sanity.py"
+  ],
+  "success_rate": {"backend": "100%", "frontend": "100%"},
+  "seed_data_creation": "None created; used existing seed (31 jobs, 42 careers, 48 skills, 4 demo accounts).",
+  "should_call_test_agent_after_fix": false,
+  "should_main_agent_self_test": false,
+  "test_credentials": "/app/memory/test_credentials.md — admin@elevateme.com/Admin@123, employer|talent|recruiter@elevateme.com/Demo@123. All 4 logins + GET /api/auth/me verified 200 with correct role; missing token -> 403, wrong password -> 401. Auth uses bcrypt (auth.py) with bearer tokens in the response body (not httpOnly cookies) — that is the app's documented design, not a defect.",
+  "context_for_next_testing_agent": "All four iteration_7 residual defects are confirmed fixed; no open backend or frontend issues. Regression suites to reuse: test_iteration8_cleanup.py (footer target slugs, exhaustive cross-reference sanitization crawl over all career/skill details, 404 behaviour, jobs count, career-detail open roles) and test_iteration8_auth_sanity.py. Careers slug for Machine Learning Engineer is 'ml-engineer' (NOT 'machine-learning-engineer') — assert on that. Career-detail open-roles heading is dynamic: 'Open <Title> roles on ElevateMe', so match on a[href^='/jobs/'] counts rather than literal 'Open roles'. Only remaining notes are cosmetic content suggestions (single-guide categories on /careers, legacy career chips on location pages).",
+  "rca_of_the_issue": "Iteration_7 root cause was that the blue-collar catalog removal updated seo_content data but not the hard-coded footer link list (PublicLayout.jsx), hub marketing copy, or the inline 404 fallbacks. Fixes verified: footer list replaced with professional slugs, copy rewritten, err branches now render the shared <NotFound /> component, and an import-time filter prunes cross-references to deleted slugs so the API never emits a slug that would 404."
+}

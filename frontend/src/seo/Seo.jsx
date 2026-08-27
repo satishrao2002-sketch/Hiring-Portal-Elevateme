@@ -43,6 +43,18 @@ export function faqJsonLd(faqs) {
   };
 }
 
+export function SiteVerification() {
+  const google = process.env.REACT_APP_GOOGLE_SITE_VERIFICATION;
+  const bing = process.env.REACT_APP_BING_SITE_VERIFICATION;
+  if (!google && !bing) return null;
+  return (
+    <Helmet>
+      {google && <meta name="google-site-verification" content={google} />}
+      {bing && <meta name="msvalidate.01" content={bing} />}
+    </Helmet>
+  );
+}
+
 export default function Seo({ title, description, path = "", noindex = false, jsonLd = [], image }) {
   const url = `${SITE}${path}`;
   const blocks = Array.isArray(jsonLd) ? jsonLd : [jsonLd];

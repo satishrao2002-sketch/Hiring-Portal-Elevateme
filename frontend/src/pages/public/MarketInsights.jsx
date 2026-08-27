@@ -52,9 +52,50 @@ export function MarketReport() {
       <Seo title={`${d.title} | ElevateMe`} description={d.summary.slice(0, 155)} path={`/market-insights/${slug}`} jsonLd={[breadcrumbJsonLd(crumbs), article]} />
       <Breadcrumbs items={crumbs} />
       <PageWrap>
-        <p className="label-eyebrow text-terracotta mt-6">Market Report</p>
-        <h1 className="font-display text-4xl md:text-5xl text-charcoal mb-5">{d.title}</h1>
+        <p className="label-eyebrow text-terracotta mt-6">Market Report{d.live ? " · Live" : ""}</p>
+        <h1 className="font-display text-4xl md:text-5xl text-charcoal mb-2">{d.title}</h1>
+        {d.generated_on && <p className="text-sm text-bodygray mb-5" data-testid="report-generated">Updated {d.generated_on} · computed live from ElevateMe platform data</p>}
+        {!d.generated_on && <div className="mb-5" />}
         <AnswerBlock question="Key takeaway" answer={d.answer} />
+
+        {d.stats && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6" data-testid="report-stats">
+            {d.stats.map((s) => (
+              <div key={s.label} className="bg-white border border-bordergray rounded-xl p-5">
+                <p className="font-display text-3xl text-charcoal">{s.value}</p>
+                <p className="text-sm text-bodygray mt-1">{s.label}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {d.skill_demand && (
+          <Section title="Most-requested skills right now">
+            <div className="bg-white border border-bordergray rounded-xl divide-y divide-bordergray/60" data-testid="report-skill-demand">
+              {d.skill_demand.map((s, i) => (
+                <div key={s.skill} className="flex items-center gap-4 px-5 py-3">
+                  <span className="font-display text-lg text-bodygray w-6">{i + 1}</span>
+                  <Link to={`/skills/${s.slug}`} className="font-bold text-charcoal hover:text-terracotta transition-colors flex-1">{s.skill}</Link>
+                  <div className="hidden sm:block flex-1 h-2 bg-cream rounded-full overflow-hidden max-w-xs">
+                    <div className="h-full bg-terracotta" style={{ width: `${Math.round(100 * s.count / (d.skill_demand[0]?.count || 1))}%` }} />
+                  </div>
+                  <span className="text-sm font-bold text-charcoal w-16 text-right">{s.count} role{s.count === 1 ? "" : "s"}</span>
+                </div>
+              ))}
+            </div>
+          </Section>
+        )}
+
+        {d.top_locations && (
+          <Section title="Where employers are hiring">
+            <div className="flex flex-wrap gap-2">
+              {d.top_locations.map((l) => (
+                <span key={l.location} className="bg-white border border-bordergray rounded-full px-4 py-2 text-sm font-bold text-charcoal">{l.location} · {l.count} role{l.count === 1 ? "" : "s"}</span>
+              ))}
+            </div>
+          </Section>
+        )}
+
         <Section title="What we found">
           <ul className="space-y-2">{d.findings.map((f, i) => <li key={i} className="bg-white border border-bordergray rounded-lg px-4 py-3 text-charcoal">{f}</li>)}</ul>
         </Section>

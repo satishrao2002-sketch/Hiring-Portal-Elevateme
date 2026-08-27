@@ -1,7 +1,8 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "sonner";
 import { AuthProvider } from "@/context/AuthContext";
 import ProductLayout from "@/components/product/ProductLayout";
+import { SiteVerification } from "@/seo/Seo";
 
 import Landing from "@/pages/Landing";
 import Login from "@/pages/Login";
@@ -10,7 +11,8 @@ import Register from "@/pages/Register";
 import { CareersHub, CareerDetail } from "@/pages/public/Careers";
 import { SkillsHub, SkillDetail } from "@/pages/public/Skills";
 import { JobsHub, JobDetail } from "@/pages/public/Jobs";
-import { LocationDetail, CompanyPublic } from "@/pages/public/Places";
+import { LocationDetail, CompanyPublic, LocationCareer } from "@/pages/public/Places";
+import NotFound from "@/pages/public/NotFound";
 import { MarketInsightsHub, MarketReport } from "@/pages/public/MarketInsights";
 import StaticPage from "@/pages/public/StaticPage";
 
@@ -38,6 +40,7 @@ const EMP = ["employer", "recruiter", "admin"];
 function App() {
   return (
     <AuthProvider>
+      <SiteVerification />
       <Toaster position="top-center" richColors />
       <BrowserRouter>
         <Routes>
@@ -48,6 +51,7 @@ function App() {
           {/* Public discovery layer (SEO / GEO / AEO) */}
           <Route path="/careers" element={<CareersHub />} />
           <Route path="/careers/:slug" element={<CareerDetail />} />
+          <Route path="/careers/:slug/in/:location" element={<LocationCareer />} />
           <Route path="/skills" element={<SkillsHub />} />
           <Route path="/skills/:slug" element={<SkillDetail />} />
           <Route path="/jobs" element={<JobsHub />} />
@@ -84,7 +88,7 @@ function App() {
           <Route path="/admin/employers" element={<ProductLayout roles={["admin"]}><AdminEmployers /></ProductLayout>} />
           <Route path="/admin/analytics" element={<ProductLayout roles={["admin"]}><AdminAnalytics /></ProductLayout>} />
 
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>

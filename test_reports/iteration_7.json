@@ -1,0 +1,45 @@
+{
+  "summary": "Iteration 7 verified the jobs-seed bug fix and the graduate/post-graduate catalog realignment. Backend: 26/26 pytest assertions pass (/api/seo/jobs returns 31 verified jobs incl. ML Engineer, AI Engineer, Cybersecurity Analyst, Data Engineer, Data Scientist, Financial Analyst, PM, UX Designer; /api/seo/careers = 42 with all 10 blue-collar slugs removed and ai-engineer/data-engineer/ml-engineer/cybersecurity-analyst/cloud-engineer present; /api/seo/skills = 48 with AI/deep-learning/nlp/cloud-computing added and trades skills gone; data-scientist & backend-engineer career pages now have non-empty jobs[] + salary_range; no _id leakage; 404s correct). Frontend: /jobs lists 31 cards by default, 'machine'->6, 'cyber'->2, 'new york'->5, 'zzz'->empty-state, 'nurse'->empty-state + registered-nurse career chip (never dead-ends). Job card click -> /jobs/<id> with title, company, requirements and JobPosting JSON-LD. Career detail pages (ai-engineer, data-engineer, ml-engineer, registered-nurse) render H1/answer/core-skill chips/FAQ with only-existing skill links. THREE residual defects found: a sitewide footer link to the deleted /careers/electrician (404 dead-end), stale 'skilled trades / Electrician' marketing copy on /careers and /skills, and the skill/career not-found fallbacks lack data-testid='not-found'.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/seo/skills/{slug}", "issue": "Raw pass-through field 'roles' still contains slugs of deleted careers (bookkeeper, customer-support-specialist, warehouse-manager, logistics-coordinator, medical-assistant). The UI safely uses the filtered 'careers' array, so no 404s, but the API leaks stale data. Clean up SKILLS[*].roles in seo_content.py."},
+      {"endpoint": "/api/seo/careers/accountant", "issue": "Raw 'related_careers' still lists 'bookkeeper' (deleted). Filtered 'related' array is correct, so UI is safe; clean up the source list."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "PublicLayout footer", "issue": "CRITICAL: footer 'Careers' column links to /careers/electrician on EVERY page. The career was deleted, so it renders a bare 'Guide not found' dead-end. Replace with a graduate/professional career (e.g. AI Engineer or Data Scientist).", "selector": "footer a[href='/careers/electrician']", "priority": "HIGH"},
+      {"component": "Careers.jsx / Skills.jsx (fallback states)", "issue": "The inline 'Guide not found' / 'Skill not found' fallbacks do not use the NotFound component and have no data-testid='not-found'; the page is also almost entirely blank with no suggested links.", "selector": "[data-testid='not-found']", "priority": "MEDIUM"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "/careers hub", "issues": ["Intro paragraph still says 'technology, healthcare, business, finance, the skilled trades and more' (Careers.jsx:22)", "AnswerBlock still says '...from Data Analyst, Registered Nurse and Accountant to Electrician, Sales Representative and UX Designer' (Careers.jsx:23) — contradicts the graduate/professional realignment and names a deleted career", "Seo description also mentions 'skilled trades' (Careers.jsx:17)"]},
+      {"screen": "/skills hub", "issues": ["Seo description mentions 'and the trades' (Skills.jsx:17)", "AnswerBlock says '...Figma and the skilled trades matter in their domains' (Skills.jsx:23)"]},
+      {"screen": "/places/<city> (LocationDetail)", "issues": ["Answer + FAQ copy still references 'the skilled trades' three times (Places.jsx:109,112,113)"]},
+      {"screen": "Career/Skill not-found fallback", "issues": ["Large empty viewport between the one-line message and the footer; no helpful links or suggestions"]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration7_jobs_catalog.py",
+    "/app/test_reports/pytest/iteration7.xml"
+  ],
+  "action_items": [
+    "Replace the footer 'Electrician' -> /careers/electrician link in /app/frontend/src/components/public/PublicLayout.jsx:12 with a professional career (AI Engineer / Data Scientist) — it is currently a sitewide 404 dead-end.",
+    "Remove 'skilled trades' / 'Electrician' references from Careers.jsx (lines 17, 22, 23), Skills.jsx (lines 17, 23) and Places.jsx (lines 109, 112, 113).",
+    "Route unknown /careers/<slug> and /skills/<slug> to the shared NotFound component (data-testid='not-found') or add that testid + suggested links to the inline fallbacks.",
+    "Clean stale deleted-career slugs from SKILLS[*].roles and CAREERS['accountant'].related_careers in /app/backend/seo_content.py."
+  ],
+  "critical_code_review_comments": [
+    "The audience realignment updated the data catalogs but not hard-coded navigation/marketing copy — grep for removed slugs/titles (electrician, welder, bookkeeper, warehouse, 'skilled trades') across /app/frontend/src before shipping.",
+    "server.py defensively filters unknown slugs when building 'related'/'careers' — good; keep that pattern, but the underlying source lists should still be pruned to avoid silent data drift.",
+    "Career/Skill detail 404 handling is duplicated inline in three pages; consolidate into the NotFound component (DRY + testability)."
+  ],
+  "updated_files": ["/app/backend/tests/test_iteration7_jobs_catalog.py"],
+  "success_rate": {"backend": "100%", "frontend": "82%"},
+  "seed_data_creation": "None created; relied on SEED_VERSION=3 reseed (31 roles / 11 companies verified live).",
+  "should_call_test_agent_after_fix": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Backend regression suite for this iteration: /app/backend/tests/test_iteration7_jobs_catalog.py (26 tests, all passing). It intentionally asserts on the server-filtered 'related' and 'careers' keys (not the raw 'related_careers'/'roles' pass-through fields, which still contain stale deleted slugs). Jobs bug is fully fixed and search never dead-ends. Remaining work is frontend copy/links: footer /careers/electrician 404, 'skilled trades' copy on /careers, /skills, /places, and the missing data-testid='not-found' on career/skill fallbacks. Re-verify those four items after the fix.",
+  "rca_of_the_issue": "Original empty-jobs bug: only 3 seed roles existed; fixed by seed_data.py ROLES (31) + SEED_VERSION=3 version-gated reseed — confirmed live (GET /api/seo/jobs -> 31). Residual issue RCA: the blue-collar careers were removed from seo_content.CAREERS but the hard-coded footer link list and hub marketing copy in the React pages were never updated, so the UI still advertises and links to a career slug that now 404s."
+}

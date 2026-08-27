@@ -9,8 +9,8 @@ const NAV = [
 ];
 
 const FOOTER = {
-  "Careers": [["Data Analyst", "/careers/data-analyst"], ["Data Scientist", "/careers/data-scientist"], ["Backend Engineer", "/careers/backend-engineer"], ["Business Analyst", "/careers/business-analyst"], ["BI Analyst", "/careers/bi-analyst"]],
-  "Skills": [["SQL", "/skills/sql"], ["Python", "/skills/python"], ["Power BI", "/skills/power-bi"], ["AWS", "/skills/aws"], ["React", "/skills/react"]],
+  "Careers": [["Data Scientist", "/careers/data-scientist"], ["AI Engineer", "/careers/ai-engineer"], ["Cybersecurity Analyst", "/careers/cybersecurity-analyst"], ["Financial Analyst", "/careers/financial-analyst"], ["Product Manager", "/careers/product-manager"]],
+  "Skills": [["Python", "/skills/python"], ["Machine Learning", "/skills/machine-learning"], ["SQL", "/skills/sql"], ["Cloud Computing", "/skills/cloud-computing"], ["Communication", "/skills/communication"]],
   "Locations": [["Chicago", "/locations/chicago-il"], ["Austin", "/locations/austin-tx"], ["New York", "/locations/new-york-ny"], ["Boston", "/locations/boston-ma"], ["Remote", "/locations/remote"]],
   "Company": [["About", "/about"], ["How It Works", "/how-it-works"], ["Methodology", "/methodology"], ["Trust & Integrity", "/trust"], ["Our AI Principles", "/ai"]],
   "For You": [["For Students", "/for-students"], ["For Employers", "/for-employers"], ["For Recruiters", "/for-recruiters"], ["Market Insights", "/market-insights"], ["Browse Jobs", "/jobs"]],

@@ -1,6 +1,37 @@
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { ArrowRight, MapPin, Building2, Briefcase } from "lucide-react";
 import { Pill } from "@/components/brand";
+import api from "@/lib/api";
+
+const chipClass = "bg-white border border-bordergray rounded-full px-4 py-2 text-sm font-bold text-charcoal";
+const chipLinkClass = chipClass + " hover:border-terracotta hover:text-terracotta transition-colors";
+const skillSlug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
+// module-level cache of valid skill slugs (populated once)
+let _skillSlugSet = null;
+
+// Renders skill chips, linking ONLY to skill pages that actually exist (no soft-404s).
+// Accepts either strings (["SQL", ...]) or objects ([{name, slug, has_guide}]).
+export function SkillChips({ skills }) {
+  const hasObjects = skills.length > 0 && typeof skills[0] === "object";
+  const [validSet, setValidSet] = useState(_skillSlugSet);
+  useEffect(() => {
+    if (hasObjects || _skillSlugSet) { setValidSet(_skillSlugSet); return; }
+    api.get("/seo/skills").then((r) => { _skillSlugSet = new Set(r.data.map((s) => s.slug)); setValidSet(_skillSlugSet); })
+      .catch(() => { _skillSlugSet = new Set(); setValidSet(_skillSlugSet); });
+  }, [hasObjects]);
+  const items = hasObjects
+    ? skills
+    : skills.map((s) => ({ name: s, slug: skillSlug(s), has_guide: validSet ? validSet.has(skillSlug(s)) : false }));
+  return (
+    <div className="flex flex-wrap gap-2">
+      {items.map((it) => it.has_guide
+        ? <Link key={it.name} to={`/skills/${it.slug}`} className={chipLinkClass} data-testid={`skill-chip-${it.slug}`}>{it.name}</Link>
+        : <span key={it.name} className={chipClass} data-testid={`skill-chip-plain-${it.slug}`}>{it.name}</span>)}
+    </div>
+  );
+}
 
 export function AnswerBlock({ question, answer }) {
   return (
