@@ -12,6 +12,7 @@ import { CareersHub, CareerDetail } from "@/pages/public/Careers";
 import { SkillsHub, SkillDetail } from "@/pages/public/Skills";
 import { JobsHub, JobDetail } from "@/pages/public/Jobs";
 import { LocationDetail, CompanyPublic, LocationCareer } from "@/pages/public/Places";
+import { ProgramsHub, ProgramDetail } from "@/pages/public/Programs";
 import NotFound from "@/pages/public/NotFound";
 import { MarketInsightsHub, MarketReport } from "@/pages/public/MarketInsights";
 import StaticPage from "@/pages/public/StaticPage";
@@ -19,6 +20,7 @@ import StaticPage from "@/pages/public/StaticPage";
 import EmployerDashboard from "@/pages/employer/EmployerDashboard";
 import FindTalent from "@/pages/employer/FindTalent";
 import Shortlist from "@/pages/employer/Shortlist";
+import Pools from "@/pages/employer/Pools";
 import Messages from "@/pages/employer/Messages";
 import Interviews from "@/pages/employer/Interviews";
 import CandidateProfile from "@/pages/employer/CandidateProfile";
@@ -52,6 +54,8 @@ function App() {
           <Route path="/careers" element={<CareersHub />} />
           <Route path="/careers/:slug" element={<CareerDetail />} />
           <Route path="/careers/:slug/in/:location" element={<LocationCareer />} />
+          <Route path="/programs" element={<ProgramsHub />} />
+          <Route path="/programs/:slug" element={<ProgramDetail />} />
           <Route path="/skills" element={<SkillsHub />} />
           <Route path="/skills/:slug" element={<SkillDetail />} />
           <Route path="/jobs" element={<JobsHub />} />
@@ -72,6 +76,7 @@ function App() {
           <Route path="/employer" element={<ProductLayout roles={EMP}><EmployerDashboard /></ProductLayout>} />
           <Route path="/employer/find-talent" element={<ProductLayout roles={EMP}><FindTalent /></ProductLayout>} />
           <Route path="/employer/shortlist" element={<ProductLayout roles={EMP}><Shortlist /></ProductLayout>} />
+          <Route path="/employer/pools" element={<ProductLayout roles={EMP}><Pools /></ProductLayout>} />
           <Route path="/employer/messages" element={<ProductLayout roles={EMP}><Messages /></ProductLayout>} />
           <Route path="/employer/interviews" element={<ProductLayout roles={EMP}><Interviews /></ProductLayout>} />
           <Route path="/employer/candidate/:slug" element={<ProductLayout roles={EMP}><CandidateProfile /></ProductLayout>} />

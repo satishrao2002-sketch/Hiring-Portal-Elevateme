@@ -8,6 +8,7 @@ import {
 import api from "@/lib/api";
 import { Loading, MatchRing, Pill, VerifiedBadge, DimBar } from "@/components/brand";
 import WhyMatch from "@/components/product/WhyMatch";
+import AddToPoolMenu from "@/components/product/AddToPoolMenu";
 import { toast } from "sonner";
 
 const EV_ICON = { GitHub: Github, Dashboard: FileCode2, Portfolio: ExternalLink, Assessment: Award, "Case Study": FileCode2 };
@@ -68,6 +69,7 @@ export default function CandidateProfile() {
         </div>
         <div className="flex flex-wrap gap-2 mt-5">
           <button onClick={() => action("shortlist")} className="bg-white text-charcoal rounded-lg px-4 py-2 label-eyebrow inline-flex items-center gap-2 hover:bg-cream transition-colors" data-testid="profile-shortlist"><Bookmark size={14} /> Shortlist</button>
+          <AddToPoolMenu candidateSlug={slug} variant="button" />
           <button onClick={() => action("message")} className="btn-secondary rounded-lg px-4 py-2 label-eyebrow inline-flex items-center gap-2" data-testid="profile-message"><MessageSquare size={14} /> Message</button>
           <button onClick={() => action("interview")} className="btn-primary rounded-lg px-4 py-2 label-eyebrow inline-flex items-center gap-2" data-testid="profile-interview"><CalendarPlus size={14} /> Request Interview</button>
         </div>

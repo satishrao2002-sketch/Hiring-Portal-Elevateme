@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bell, Sparkles, MessageSquare, Eye, CalendarCheck, TrendingUp, CheckCheck } from "lucide-react";
+import { Bell, Sparkles, MessageSquare, Eye, CalendarCheck, TrendingUp, CheckCheck, Users } from "lucide-react";
 import api from "@/lib/api";
 
-const ICONS = { match: Sparkles, message: MessageSquare, view: Eye, interview: CalendarCheck, readiness: TrendingUp, shortlist: CheckCheck, feedback: CalendarCheck };
+const ICONS = { match: Sparkles, message: MessageSquare, view: Eye, interview: CalendarCheck, readiness: TrendingUp, shortlist: CheckCheck, feedback: CalendarCheck, pool: Users };
 
 export default function NotificationBell({ variant = "desktop" }) {
   const [open, setOpen] = useState(false);

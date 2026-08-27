@@ -245,6 +245,102 @@ async def remove_shortlist(candidate_slug: str, user: dict = Depends(current_use
     return {"ok": True}
 
 
+# ---------- Talent Pools (named recruiter shortlists) ----------
+class PoolInput(BaseModel):
+    name: str
+    description: Optional[str] = None
+    role_id: Optional[str] = None
+
+
+class PoolCandidateInput(BaseModel):
+    candidate_slug: str
+
+
+def _require_employer(user: dict):
+    if user.get("role") not in ("employer", "recruiter", "admin"):
+        raise HTTPException(status_code=403, detail="Talent pools are available to employers and recruiters.")
+
+
+async def _pool_preview(pool: dict):
+    cands = []
+    for slug in pool.get("candidate_slugs", [])[:4]:
+        c = await db.candidates.find_one({"slug": slug}, {"_id": 0, "name": 1, "title": 1, "slug": 1})
+        if c:
+            cands.append(c)
+    return {"id": pool["id"], "name": pool["name"], "description": pool.get("description"),
+            "role_id": pool.get("role_id"), "created_at": pool.get("created_at"),
+            "count": len(pool.get("candidate_slugs", [])), "preview": cands}
+
+
+@api.get("/pools")
+async def list_pools(user: dict = Depends(current_user)):
+    pools = await db.talent_pools.find({"user_id": user["id"]}, {"_id": 0}).sort("created_at", -1).to_list(200)
+    return [await _pool_preview(p) for p in pools]
+
+
+@api.post("/pools")
+async def create_pool(body: PoolInput, user: dict = Depends(current_user)):
+    _require_employer(user)
+    pool = {"id": str(uuid.uuid4()), "user_id": user["id"], "company_id": user.get("company_id"),
+            "name": body.name.strip(), "description": (body.description or "").strip() or None,
+            "role_id": body.role_id, "candidate_slugs": [], "created_at": now_iso()}
+    await db.talent_pools.insert_one(dict(pool))
+    return await _pool_preview(pool)
+
+
+@api.get("/pools/{pool_id}")
+async def get_pool(pool_id: str, user: dict = Depends(current_user)):
+    pool = await db.talent_pools.find_one({"id": pool_id, "user_id": user["id"]}, {"_id": 0})
+    if not pool:
+        raise HTTPException(status_code=404, detail="Pool not found")
+    candidates = []
+    for slug in pool.get("candidate_slugs", []):
+        c = await db.candidates.find_one({"slug": slug}, {"_id": 0})
+        if c:
+            candidates.append(c)
+    return {**pool, "candidates": candidates}
+
+
+@api.patch("/pools/{pool_id}")
+async def update_pool(pool_id: str, body: PoolInput, user: dict = Depends(current_user)):
+    res = await db.talent_pools.update_one(
+        {"id": pool_id, "user_id": user["id"]},
+        {"$set": {"name": body.name.strip(), "description": (body.description or "").strip() or None, "role_id": body.role_id}})
+    if not res.matched_count:
+        raise HTTPException(status_code=404, detail="Pool not found")
+    return {"ok": True}
+
+
+@api.delete("/pools/{pool_id}")
+async def delete_pool(pool_id: str, user: dict = Depends(current_user)):
+    await db.talent_pools.delete_one({"id": pool_id, "user_id": user["id"]})
+    return {"ok": True}
+
+
+@api.post("/pools/{pool_id}/candidates")
+async def add_pool_candidate(pool_id: str, body: PoolCandidateInput, user: dict = Depends(current_user)):
+    _require_employer(user)
+    pool = await db.talent_pools.find_one({"id": pool_id, "user_id": user["id"]})
+    if not pool:
+        raise HTTPException(status_code=404, detail="Pool not found")
+    if body.candidate_slug in pool.get("candidate_slugs", []):
+        return {"ok": True, "already": True}
+    await db.talent_pools.update_one({"_id": pool["_id"]}, {"$addToSet": {"candidate_slugs": body.candidate_slug}})
+    tuid = await talent_user_for_candidate(body.candidate_slug)
+    company = None
+    if user.get("company_id"):
+        company = await db.companies.find_one({"id": user["company_id"]}, {"_id": 0, "name": 1})
+    await add_notification(tuid, "pool", "You were added to a talent pool",
+                           f"{(company or {}).get('name', user['name'])} added you to \"{pool['name']}\".", "/talent")
+    return {"ok": True}
+
+
+@api.delete("/pools/{pool_id}/candidates/{candidate_slug}")
+async def remove_pool_candidate(pool_id: str, candidate_slug: str, user: dict = Depends(current_user)):
+    await db.talent_pools.update_one({"id": pool_id, "user_id": user["id"]}, {"$pull": {"candidate_slugs": candidate_slug}})
+    return {"ok": True}
+
+
 # ---------- Messaging ----------
 class MessageInput(BaseModel):
     to_candidate_slug: str
@@ -712,6 +808,38 @@ async def seo_location_career(career_slug: str, location_slug: str):
         "local_talent_count": len(cands), "location_talent_count": len(local_all),
         "other_locations": other_locations, "related_careers": related_careers,
     }
+
+
+@api.get("/seo/programs")
+async def seo_programs():
+    return [{"slug": p["slug"], "name": p["name"], "degree_level": p["degree_level"],
+             "answer": p["answer"], "career_count": len(p["careers"])}
+            for p in seo_content.PROGRAMS.values()]
+
+
+@api.get("/seo/programs/{slug}")
+async def seo_program(slug: str):
+    p = seo_content.PROGRAMS.get(slug)
+    if not p:
+        raise HTTPException(status_code=404, detail="Program not found")
+    careers = [{"slug": s, "title": seo_content.CAREERS[s]["title"], "answer": seo_content.CAREERS[s]["answer"],
+                "category": seo_content.CAREERS[s].get("category"), "salary_us": seo_content.CAREERS[s].get("salary_us"),
+                "core_skills": seo_content.CAREERS[s]["core_skills"]}
+               for s in p["careers"] if s in seo_content.CAREERS]
+    skills = [{"slug": s, "name": seo_content.SKILLS[s]["name"]} for s in p["skills"] if s in seo_content.SKILLS]
+    # live jobs matching any of this program's careers
+    titles = [c["title"] for c in careers]
+    jobs, sal = [], []
+    if titles:
+        rx = "|".join(_re.escape(t) for t in titles)
+        roles = await db.roles.find({"title": {"$regex": rx, "$options": "i"}}, {"_id": 0}).to_list(60)
+        for r in roles:
+            comp = await db.companies.find_one({"id": r["company_id"]}, {"_id": 0})
+            jobs.append(_job_from_role(r, comp))
+            if r.get("salary_min"):
+                sal += [r["salary_min"], r["salary_max"]]
+    salary_range = {"min": min(sal), "max": max(sal)} if sal else None
+    return {**p, "careers": careers, "skills": skills, "jobs": jobs, "salary_range": salary_range}
 
 
 @api.get("/seo/jobs")

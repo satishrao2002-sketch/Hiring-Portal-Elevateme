@@ -690,6 +690,48 @@ TOP_LOCATION_SLUGS = ["new-york-ny", "chicago-il", "austin-tx", "remote"]
 LOCATIONS = {slug: {"slug": slug, "name": name, "match": match, "top": slug in TOP_LOCATION_SLUGS}
              for slug, name, match in _LOCS}
 
+
+def _p(slug, name, degree_level, answer, careers, skills):
+    return {"slug": slug, "name": name, "degree_level": degree_level, "answer": answer,
+            "careers": careers, "skills": skills}
+
+
+# Degree / university program guides — "Careers for <program> graduates".
+PROGRAMS = {p["slug"]: p for p in [
+    _p("computer-science", "Computer Science", "Bachelor's / Master's",
+       "A Computer Science degree opens doors to some of the most in-demand and highest-paid careers in the U.S. — from software and backend engineering to AI, machine learning, cloud and cybersecurity. Graduates are valued for problem-solving, systems thinking and the ability to build and scale technology.",
+       ["backend-engineer", "frontend-engineer", "full-stack-engineer", "ai-engineer", "ml-engineer", "data-engineer", "devops-engineer", "cloud-engineer", "cybersecurity-analyst", "qa-engineer"],
+       ["python", "javascript", "sql", "machine-learning", "aws", "docker"]),
+    _p("data-science", "Data Science", "Bachelor's / Master's",
+       "A Data Science degree prepares graduates to turn data into insight and intelligent products. It leads to careers in data science, machine learning, AI, analytics and data engineering across nearly every industry.",
+       ["data-scientist", "ml-engineer", "ai-engineer", "data-analyst", "data-engineer", "bi-analyst"],
+       ["python", "sql", "machine-learning", "deep-learning", "data-visualization", "artificial-intelligence"]),
+    _p("information-technology", "Information Technology", "Bachelor's / Master's",
+       "An Information Technology degree leads to careers building, running and securing the systems organizations depend on — cloud, DevOps, security, quality and data.",
+       ["cloud-engineer", "devops-engineer", "cybersecurity-analyst", "qa-engineer", "backend-engineer", "data-analyst"],
+       ["linux", "aws", "sql", "docker", "python", "cloud-computing"]),
+    _p("cybersecurity", "Cybersecurity", "Bachelor's / Master's",
+       "A Cybersecurity degree prepares graduates to protect organizations from evolving digital threats — a field with strong demand and a widening talent gap.",
+       ["cybersecurity-analyst", "cloud-engineer", "devops-engineer", "backend-engineer"],
+       ["linux", "aws", "python", "cloud-computing"]),
+    _p("business-administration", "Business Administration (MBA)", "Bachelor's / MBA",
+       "A Business Administration degree or MBA is one of the most versatile qualifications, leading to leadership careers in product, consulting, operations, strategy and general management across every industry.",
+       ["product-manager", "management-consultant", "operations-manager", "business-analyst", "sales-manager", "hr-manager"],
+       ["leadership", "communication", "project-management", "data-analysis", "financial-modeling"]),
+    _p("finance", "Finance & Accounting", "Bachelor's / Master's",
+       "A Finance or Accounting degree leads to analytical, high-responsibility careers in financial analysis, accounting, auditing, consulting and corporate strategy.",
+       ["financial-analyst", "accountant", "auditor", "management-consultant", "business-analyst"],
+       ["financial-modeling", "excel", "accounting", "data-analysis", "sql"]),
+    _p("marketing", "Marketing & Communications", "Bachelor's / Master's",
+       "A Marketing or Communications degree leads to creative, data-driven careers in digital marketing, content, social media, SEO and brand growth.",
+       ["digital-marketing-specialist", "seo-specialist", "social-media-manager", "content-writer", "product-manager"],
+       ["digital-marketing", "seo", "google-analytics", "content-writing", "communication"]),
+    _p("design", "Design & Human-Computer Interaction", "Bachelor's / Master's",
+       "A Design or HCI degree leads to careers shaping how people experience products — from UX and product design to visual and brand design.",
+       ["ux-designer", "product-designer", "graphic-designer", "frontend-engineer"],
+       ["figma", "ux-design", "prototyping", "user-research", "adobe-creative-suite"]),
+]}
+
 # Live report metadata — findings/stats are computed at request time from live
 # platform data in server.py (see seo_market_report). Kept separate so the hub
 # listing can advertise it while the detail view stays fresh.

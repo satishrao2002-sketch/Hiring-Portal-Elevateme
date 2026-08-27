@@ -63,6 +63,7 @@ async function collectRoutes() {
     { path: "/", priority: "1.0", render: true },
     ...["about", "how-it-works", "trust", "methodology", "ai", "for-students", "for-employers", "for-recruiters"].map((s) => ({ path: `/${s}`, priority: "0.7", render: true })),
     { path: "/careers", priority: "0.9", render: true },
+    { path: "/programs", priority: "0.9", render: true },
     { path: "/skills", priority: "0.9", render: true },
     { path: "/jobs", priority: "0.9", render: true },
     { path: "/market-insights", priority: "0.8", render: true },
@@ -71,15 +72,16 @@ async function collectRoutes() {
   const DATA = await pickDataBase();
   const get = (pathname) => jRetry(DATA, pathname).catch(() => []);
   try {
-    const [careers, skills, jobs, companies, locations, locCareers, reports] = await Promise.all([
+    const [careers, skills, jobs, companies, locations, locCareers, reports, programs] = await Promise.all([
       get("/api/seo/careers"), get("/api/seo/skills"), get("/api/seo/jobs"),
       get("/api/companies"), get("/api/seo/locations"), get("/api/seo/location-careers"),
-      get("/api/seo/market-insights"),
+      get("/api/seo/market-insights"), get("/api/seo/programs"),
     ]);
     // Locations flagged `top` get their role x city guides statically prerendered;
     // the rest are still listed in the sitemap and render client-side (crawlable).
     const topLocs = new Set(locations.filter((l) => l.top).map((l) => l.slug));
     careers.forEach((c) => add(`/careers/${c.slug}`, "0.8"));
+    programs.forEach((p) => add(`/programs/${p.slug}`, "0.8"));
     skills.forEach((s) => add(`/skills/${s.slug}`, "0.8"));
     jobs.forEach((jb) => add(`/jobs/${jb.id}`, "0.7"));
     companies.forEach((c) => add(`/companies/${c.id}`, "0.6"));

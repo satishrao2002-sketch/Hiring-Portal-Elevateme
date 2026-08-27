@@ -1,8 +1,9 @@
 import { Link } from "react-router-dom";
 import { MapPin, Clock, Briefcase, MessageSquare, CalendarPlus, Bookmark } from "lucide-react";
 import { MatchRing, VerifiedBadge, Pill } from "@/components/brand";
+import AddToPoolMenu from "@/components/product/AddToPoolMenu";
 
-export default function TalentCard({ candidate, match, onShortlist, onMessage, onInterview, compact }) {
+export default function TalentCard({ candidate, match, onShortlist, onMessage, onInterview, showPools, roleId, compact }) {
   const skills = candidate.skills.slice(0, 4).map((s) => s.name);
   return (
     <div className="bg-white border border-bordergray rounded-lg p-5 card-hover flex flex-col" data-testid={`talent-card-${candidate.slug}`}>
@@ -48,6 +49,7 @@ export default function TalentCard({ candidate, match, onShortlist, onMessage, o
           View Profile
         </Link>
         {onShortlist && <button onClick={() => onShortlist(candidate)} title="Shortlist" className="w-9 h-9 grid place-items-center rounded-md border border-bordergray hover:border-terracotta hover:text-terracotta transition-colors" data-testid={`shortlist-${candidate.slug}`}><Bookmark size={16} /></button>}
+        {showPools && <AddToPoolMenu candidateSlug={candidate.slug} roleId={roleId} />}
         {onMessage && <button onClick={() => onMessage(candidate)} title="Message" className="w-9 h-9 grid place-items-center rounded-md border border-bordergray hover:border-brandgreen hover:text-brandgreen transition-colors" data-testid={`message-${candidate.slug}`}><MessageSquare size={16} /></button>}
         {onInterview && <button onClick={() => onInterview(candidate)} title="Request Interview" className="w-9 h-9 grid place-items-center rounded-md border border-bordergray hover:border-brandgreen hover:text-brandgreen transition-colors" data-testid={`interview-${candidate.slug}`}><CalendarPlus size={16} /></button>}
       </div>

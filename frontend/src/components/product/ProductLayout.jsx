@@ -11,7 +11,7 @@ import NotificationBell from "@/components/product/NotificationBell";
 
 const SHORT_LABELS = {
   "Career Match": "Career", "Career Readiness": "Ready", "Find Talent": "Find",
-  "Command Center": "Center", "Opportunities": "Jobs",
+  "Command Center": "Center", "Opportunities": "Jobs", "Talent Pools": "Pools",
 };
 
 const NAVS = {
@@ -19,6 +19,7 @@ const NAVS = {
     ["/employer", "Dashboard", LayoutDashboard],
     ["/employer/find-talent", "Find Talent", Search],
     ["/employer/shortlist", "Shortlist", Bookmark],
+    ["/employer/pools", "Talent Pools", Users],
     ["/employer/messages", "Messages", MessagesSquare],
     ["/employer/interviews", "Interviews", CalendarCheck],
   ],
@@ -26,6 +27,7 @@ const NAVS = {
     ["/employer", "Dashboard", LayoutDashboard],
     ["/employer/find-talent", "Find Talent", Search],
     ["/employer/shortlist", "Shortlist", Bookmark],
+    ["/employer/pools", "Talent Pools", Users],
     ["/employer/messages", "Messages", MessagesSquare],
     ["/employer/interviews", "Interviews", CalendarCheck],
   ],

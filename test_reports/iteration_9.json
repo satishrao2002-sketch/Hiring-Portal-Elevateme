@@ -1,0 +1,45 @@
+{
+  "summary": "Iteration 9 full test of the two new features (University/Program SEO pages + Grad Talent Pools) plus regression. Backend: 20/20 assertions pass in /app/backend/tests/test_iteration9_programs_pools.py — GET /api/seo/programs returns exactly the 8 expected programs with slug/name/degree_level/answer/career_count; all 8 detail endpoints resolve careers[] (title+salary_us), skills[], jobs[] and salary_range; /api/seo/programs/bogus -> 404; Pools full lifecycle (create -> list w/ count+preview -> add candidate priya-shah -> GET with resolved candidates[] -> idempotent duplicate add -> PATCH rename -> DELETE candidate -> DELETE pool -> 404) all correct, no _id leakage, unauthenticated /api/pools = 403, and cross-user access is properly scoped (employer gets 404 on recruiter pool for GET/PATCH/POST-candidate and does not see it in list). Notification on add-to-pool IS created for the candidate's talent user (note: field is 'kind':'pool', not 'type'). Frontend: /programs renders 8 program-* cards, CS detail shows H1 'Careers for Computer Science Graduates', answer block, 10 program-career-* tiles (navigate correctly to /careers/<slug>), skills section and 6 live job links; /programs/bogus renders NotFound; nav has Programs link. Recruiter login -> sidebar nav-talent-pools -> /employer/pools create/detail/back/delete all work with toasts; Add-to-Pool works from Find Talent (Discover: 21 cards, Search mode: filtered card) including inline 'New pool' create + existing pool option, and from /employer/candidate/priya-shah (add-to-pool-priya-shah); added candidate appears in the pool detail (pool-candidate-priya-shah) and can be removed. Employer account starts with empty pool state (no cross-user leakage). Regression OK: /employer/shortlist, /jobs, /careers, /skills all render. All TEST_ data created during testing was deleted.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/pools, POST /api/pools/{id}/candidates", "issue": "No role gate — a 'talent' role user can create talent pools and add candidates (returns 200). Pools are advertised as an employer/recruiter feature; consider require_role('employer','recruiter','admin') like other employer endpoints."},
+      {"endpoint": "POST /api/auth/login", "issue": "PRE-EXISTING: no brute-force lockout — 7 consecutive wrong-password attempts all return 401 (playbook expects 429/423 after 5)."},
+      {"endpoint": "GET /api/talent/dashboard", "issue": "PRE-EXISTING (flagged in earlier iterations): returns 200 with full candidate PII without authentication (slug query param)."},
+      {"endpoint": "POST /api/shortlist", "issue": "PRE-EXISTING: talent role can shortlist candidates (200 instead of 403)."},
+      {"endpoint": "GET /api/notifications", "issue": "Notification documents use 'kind' as the discriminator while the review request/spec describes type 'pool'. Works, but naming is inconsistent with the spec — align docs/tests."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration9_programs_pools.py",
+    "/app/backend/tests/test_iteration9_auth_playbook.py",
+    "/app/test_reports/pytest/iteration9.xml"
+  ],
+  "action_items": [
+    "Optional: restrict /api/pools endpoints to employer/recruiter/admin roles (talent users can currently create pools).",
+    "Pre-existing security gaps still open: unauthenticated /api/talent/dashboard PII, talent able to POST /api/shortlist, no login brute-force lockout.",
+    "Stale legacy test files need updating by whoever owns them (tests/test_seo_catalog_expansion.py, tests/test_seo_location_market.py, tests/backend_test.py) — their hard-coded catalog counts no longer match the expanded catalog; 8 of the 11 failures in the full suite are stale count expectations, not product bugs."
+  ],
+  "critical_code_review_comments": [
+    "Pools endpoints rely only on current_user (no role check) unlike the rest of the employer surface — add require_role for consistency.",
+    "GET /api/seo/programs/{slug} runs a per-role companies lookup in a loop (N+1); fine at 31 roles but batch it if job volume grows.",
+    "Auth playbook checks: bcrypt hashes are $2b$ (OK), CORS_ORIGINS is explicit in backend/.env with allow_credentials=True (OK), auth uses bearer token in body (no httpOnly cookie — by design per /app/memory/test_credentials.md), brute-force lockout MISSING."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration9_programs_pools.py",
+    "/app/backend/tests/test_iteration9_auth_playbook.py",
+    "/app/test_reports/iteration_9.json"
+  ],
+  "success_rate": {"backend": "100% (20/20 new feature assertions)", "frontend": "100% of new-feature flows"},
+  "seed_data_creation": "Temporary pools TEST_Pool_A / TEST_Scoped / TEST_Notify_Pool / TEST_QA Pool 9 / TEST_QA Inline Pool / TEST_FT Pool / TEST_Emp Pool — all deleted. Recruiter demo pool 'Data Science New-Grads 2026' left untouched. Talent user has extra 'pool' notifications from add-to-pool tests (harmless).",
+  "should_call_test_agent_after_fix": false,
+  "should_main_agent_self_test": true,
+  "test_credentials": "recruiter@elevateme.com / Demo@123, employer@elevateme.com / Demo@123, talent@elevateme.com / Demo@123 — all valid",
+  "context_for_next_testing_agent": "New feature suites to reuse: test_iteration9_programs_pools.py (programs SEO + pools CRUD/scoping/notification) and test_iteration9_auth_playbook.py. Gotchas: (1) notifications endpoint returns {items:[], unread:n} and notification discriminator field is 'kind' not 'type'; (2) FindTalent has 3 modes — data-testid='mode-match|mode-discover|mode-search'; search-input only exists in Search mode, candidate cards (with add-to-pool-*) appear in Discover/Search; (3) AddToPoolMenu loads pools async — wait ~1.5s after opening pool-menu before counting pool-option-*; (4) 'Data Science New-Grads 2026' also appears as the empty-state hint/placeholder text on /employer/pools, so don't use body-text matching to test cross-user leakage — use the API or pool-card-* counts; (5) legacy suites test_seo_catalog_expansion.py / test_seo_location_market.py / backend_test.py have 11 stale-expectation failures unrelated to iteration 9.",
+  "rca_of_the_issue": "No functional defects found in the iteration-9 features. The only genuinely new gap is missing role authorization on /api/pools (any authenticated user, including talent, can create/manage pools) because the handlers depend on current_user instead of require_role; the remaining minor items are pre-existing auth-hardening gaps carried over from earlier iterations."
+}

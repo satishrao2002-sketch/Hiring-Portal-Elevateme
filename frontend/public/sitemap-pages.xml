@@ -10,6 +10,7 @@
   <url><loc>https://hire-verified-talent-1.preview.emergentagent.com/for-employers</loc><priority>0.7</priority></url>
   <url><loc>https://hire-verified-talent-1.preview.emergentagent.com/for-recruiters</loc><priority>0.7</priority></url>
   <url><loc>https://hire-verified-talent-1.preview.emergentagent.com/careers</loc><priority>0.9</priority></url>
+  <url><loc>https://hire-verified-talent-1.preview.emergentagent.com/programs</loc><priority>0.9</priority></url>
   <url><loc>https://hire-verified-talent-1.preview.emergentagent.com/skills</loc><priority>0.9</priority></url>
   <url><loc>https://hire-verified-talent-1.preview.emergentagent.com/jobs</loc><priority>0.9</priority></url>
   <url><loc>https://hire-verified-talent-1.preview.emergentagent.com/market-insights</loc><priority>0.8</priority></url>
@@ -55,6 +56,14 @@
   <url><loc>https://hire-verified-talent-1.preview.emergentagent.com/careers/instructional-designer</loc><priority>0.8</priority></url>
   <url><loc>https://hire-verified-talent-1.preview.emergentagent.com/careers/corporate-trainer</loc><priority>0.8</priority></url>
   <url><loc>https://hire-verified-talent-1.preview.emergentagent.com/careers/customer-success-manager</loc><priority>0.8</priority></url>
+  <url><loc>https://hire-verified-talent-1.preview.emergentagent.com/programs/computer-science</loc><priority>0.8</priority></url>
+  <url><loc>https://hire-verified-talent-1.preview.emergentagent.com/programs/data-science</loc><priority>0.8</priority></url>
+  <url><loc>https://hire-verified-talent-1.preview.emergentagent.com/programs/information-technology</loc><priority>0.8</priority></url>
+  <url><loc>https://hire-verified-talent-1.preview.emergentagent.com/programs/cybersecurity</loc><priority>0.8</priority></url>
+  <url><loc>https://hire-verified-talent-1.preview.emergentagent.com/programs/business-administration</loc><priority>0.8</priority></url>
+  <url><loc>https://hire-verified-talent-1.preview.emergentagent.com/programs/finance</loc><priority>0.8</priority></url>
+  <url><loc>https://hire-verified-talent-1.preview.emergentagent.com/programs/marketing</loc><priority>0.8</priority></url>
+  <url><loc>https://hire-verified-talent-1.preview.emergentagent.com/programs/design</loc><priority>0.8</priority></url>
   <url><loc>https://hire-verified-talent-1.preview.emergentagent.com/skills/sql</loc><priority>0.8</priority></url>
   <url><loc>https://hire-verified-talent-1.preview.emergentagent.com/skills/python</loc><priority>0.8</priority></url>
   <url><loc>https://hire-verified-talent-1.preview.emergentagent.com/skills/excel</loc><priority>0.8</priority></url>

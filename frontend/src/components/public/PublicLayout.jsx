@@ -4,7 +4,7 @@ import Logo from "@/components/Logo";
 import { useAuth, homeForRole } from "@/context/AuthContext";
 
 const NAV = [
-  ["Careers", "/careers"], ["Jobs", "/jobs"], ["Skills", "/skills"],
+  ["Careers", "/careers"], ["Programs", "/programs"], ["Jobs", "/jobs"], ["Skills", "/skills"],
   ["Insights", "/market-insights"], ["How It Works", "/how-it-works"],
 ];
 
@@ -13,7 +13,7 @@ const FOOTER = {
   "Skills": [["Python", "/skills/python"], ["Machine Learning", "/skills/machine-learning"], ["SQL", "/skills/sql"], ["Cloud Computing", "/skills/cloud-computing"], ["Communication", "/skills/communication"]],
   "Locations": [["Chicago", "/locations/chicago-il"], ["Austin", "/locations/austin-tx"], ["New York", "/locations/new-york-ny"], ["Boston", "/locations/boston-ma"], ["Remote", "/locations/remote"]],
   "Company": [["About", "/about"], ["How It Works", "/how-it-works"], ["Methodology", "/methodology"], ["Trust & Integrity", "/trust"], ["Our AI Principles", "/ai"]],
-  "For You": [["For Students", "/for-students"], ["For Employers", "/for-employers"], ["For Recruiters", "/for-recruiters"], ["Market Insights", "/market-insights"], ["Browse Jobs", "/jobs"]],
+  "For You": [["For Students", "/for-students"], ["Program Guides", "/programs"], ["For Employers", "/for-employers"], ["For Recruiters", "/for-recruiters"], ["Browse Jobs", "/jobs"]],
 };
 
 export function Breadcrumbs({ items }) {

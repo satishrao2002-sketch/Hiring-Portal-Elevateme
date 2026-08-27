@@ -99,7 +99,7 @@ export default function FindTalent() {
             <EmptyState title="No strong matches yet" hint="Try expanding location or adjusting seniority." />
           ) : (
             <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {filteredDiscover.map((c) => <TalentCard key={c.slug} candidate={c} onShortlist={shortlist} onMessage={message} onInterview={interview} compact />)}
+              {filteredDiscover.map((c) => <TalentCard key={c.slug} candidate={c} onShortlist={shortlist} onMessage={message} onInterview={interview} showPools compact />)}
             </div>
           )}
         </div>
@@ -131,7 +131,7 @@ export default function FindTalent() {
             <h3 className="font-display text-2xl text-charcoal mt-8 mb-4">Recommended candidates</h3>
             <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
               {result.top_matches.map((m) => (
-                <TalentCard key={m.candidate.slug} candidate={m.candidate} match={m.match} onShortlist={shortlist} onMessage={message} onInterview={interview} />
+                <TalentCard key={m.candidate.slug} candidate={m.candidate} match={m.match} onShortlist={shortlist} onMessage={message} onInterview={interview} showPools roleId={result?.role_id} />
               ))}
             </div>
           </motion.div>
