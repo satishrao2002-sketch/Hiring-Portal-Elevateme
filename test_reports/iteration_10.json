@@ -1,0 +1,49 @@
+{
+  "summary": "Iteration 10 testing of new security authz (talent dashboard + shortlist), login brute-force lockout, pools/admin regression, AI crawlability endpoints, legal pages and cookie consent. Backend: 33/33 pytest assertions pass (new file /app/backend/tests/test_iteration10_security_crawl.py). Frontend: all legal pages, footer legal links, footer navigation and the full cookie-consent flow (accept/decline/persist/reopen) pass AFTER a frontend restart — the dev server was serving a STALE bundle that omitted the new PublicLayout footer links. Two real gaps found: homepage (Landing.jsx) footer has no legal links / cookie-preferences button, and CORS is allow_credentials=True with allow_origins='*'.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "POST /api/auth/login", "issue": "Brute-force counter has no sliding window / reset: db.login_attempts.count only ever increments (never reset by elapsed time). After a 15-min lock expires, count is still >=5, so the NEXT single wrong password immediately re-locks for 15 min. Reset count when last_attempt is older than the window."},
+      {"endpoint": "CORS middleware (server.py ~line 959)", "issue": "allow_credentials=True combined with allow_origins from CORS_ORIGINS='*' (backend/.env). Wildcard + credentials is rejected by browsers for cookie auth and is a security smell; set explicit origins per the auth playbook."},
+      {"endpoint": "POST /api/auth/login", "issue": "Playbook item 'httpOnly cookie set on login' NOT implemented — login returns only a body token (no Set-Cookie: access_token). _current_user does read an access_token cookie, so the cookie path is dead code. Design choice, but flag: token stored client-side (localStorage) is XSS-exposed."},
+      {"endpoint": "GET /api/pools", "issue": "No _require_employer on list_pools (POST/candidates are guarded). A talent token gets 200 with an empty list instead of 403 — inconsistent with the stated policy."},
+      {"endpoint": "GET /llms.txt", "issue": "All links inside llms.txt are site-relative (/careers, /jobs...). Absolute https URLs are recommended for LLM crawlers. Not a failure."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "Landing.jsx footer (homepage /)", "issue": "Homepage footer contains NO Privacy / Terms / Cookies / Data Request links and no 'Cookie preferences' button (Landing does not use PublicLayout). Legal/consent links are unreachable from the most-crawled page — compliance + crawlability gap.", "selector": "footer (no footer-privacy-link / footer-cookie-prefs-btn on /)", "priority": "HIGH"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Any page with cookie banner open", "issues": ["Fixed bottom-right banner (z-60) overlaps the footer legal row: 'Cookie preferences' and 'Build your profile' are partially covered at 1920x1080, so the reopen button sits under the banner it opens. Consider adding bottom padding to footer while banner is open."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration10_security_crawl.py",
+    "/app/test_reports/pytest/iteration10.xml"
+  ],
+  "action_items": [
+    "Add legal footer links (Privacy/Terms/Cookies/Data Request) + Cookie preferences button to Landing.jsx footer, or reuse PublicLayout footer on the homepage.",
+    "Reset login_attempts.count when last_attempt is outside the window so an expired lock does not re-lock on the first subsequent failure.",
+    "Set explicit CORS_ORIGINS (not '*') since allow_credentials=True.",
+    "Optionally add _require_employer to GET /api/pools for consistency (currently 200 + empty list for talent).",
+    "NOTE (env): the CRA dev server did not hot-reload PublicLayout.jsx/StaticPage.jsx edits (bundle lacked footer-privacy-link until 'supervisorctl restart frontend'). Restart frontend after frontend edits before self-verifying."
+  ],
+  "critical_code_review_comments": [
+    "auth.py login(): lockout is keyed on x-forwarded-for + email with no window reset and no cap on record growth; also no lockout on the /api/auth/register path.",
+    "server.py talent_dashboard(): correct — talent slug is forced from user.candidate_id so ?slug= override is ignored (verified); admin fallback slug 'priya-shah' is hardcoded, consider requiring an explicit slug for admin.",
+    "Landing.jsx duplicates a whole footer implementation instead of reusing PublicLayout's footer (DRY + the legal-links divergence above)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration10_security_crawl.py",
+    "/app/frontend/src/pages/public/StaticPage.jsx (added data-testid=\"static-page-note\" to the legal note box)"
+  ],
+  "success_rate": {"backend": "100% (33/33)", "frontend": "92% (all legal/cookie flows pass; homepage legal footer links missing)"},
+  "seed_data_creation": "Throwaway brute-force emails (TEST_bf_*@example.com, never registered) — their db.login_attempts records were deleted after testing (collection now empty). Employer shortlist entry for priya-shah and TEST_pool_it10 pool were created and deleted within tests.",
+  "should_call_test_agent_after_fix": false,
+  "should_main_agent_self_test": true,
+  "test_credentials": "/app/memory/test_credentials.md present and valid; all 4 demo accounts log in 200 (admin/employer/recruiter/talent). bcrypt hashes are $2b$12$ for all users.",
+  "context_for_next_testing_agent": "Verified this iteration: GET /api/talent/dashboard = 401 no token, 200 talent (own priya-shah, ?slug override ignored), 403 employer/recruiter, 200 admin; /api/shortlist GET/POST/DELETE = 401 anon, 403 talent, full CRUD+persistence OK for employer; brute-force 5x401 then 429 (throwaway email), other accounts unaffected, 3 fails + correct login clears counter; /api/pools employer CRUD + candidate add OK, 403 talent on writes; /api/admin/command-center & /api/admin/employers 200 admin / 403 others / 401 anon; /llms.txt 200 text/plain, /og-image.jpg 200 image/jpeg, root HTML has meta description + og:image + ld+json; public/robots.txt exists (edge overrides /robots.txt on preview — expected). Frontend: /privacy /terms /cookies /data-request all render title+Last updated+note box (data-testid static-page-note added), footer legal links + navigation work, cookie accept/decline persist and footer prefs reopen work. IMPORTANT: if frontend test IDs seem missing, restart frontend — HMR missed source edits this session.",
+  "rca_of_the_issue": "Footer legal links initially appeared absent in the browser: root cause was a stale CRA dev bundle (bundle.js contained cookie-consent-banner but not footer-privacy-link even though 'Compiled successfully' was logged); a supervisor restart of frontend rebuilt the bundle and all footer testids appeared. The remaining genuine defect is that the homepage uses its own footer in Landing.jsx which was never updated with the legal/consent links."
+}

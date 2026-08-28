@@ -1,6 +1,7 @@
 # ElevateMe — Talent Intelligence Marketplace
-# Public discovery layer is open to search and AI crawlers.
+# Public discovery layer is open to search engines and AI answer engines.
 # Authenticated application routes are excluded from indexing.
+# AI guide for language models: /llms.txt
 
 User-agent: *
 Allow: /
@@ -10,18 +11,47 @@ Disallow: /employer
 Disallow: /talent
 Disallow: /admin
 
-# Explicitly welcome major search + AI answer engines
 User-agent: Googlebot
 Allow: /
 User-agent: Bingbot
 Allow: /
-User-agent: OAI-SearchBot
+User-agent: DuckDuckBot
+Allow: /
+User-agent: Applebot
+Allow: /
+User-agent: GPTBot
 Allow: /
 User-agent: ChatGPT-User
 Allow: /
+User-agent: OAI-SearchBot
+Allow: /
+User-agent: ClaudeBot
+Allow: /
+User-agent: Claude-Web
+Allow: /
+User-agent: anthropic-ai
+Allow: /
 User-agent: PerplexityBot
 Allow: /
+User-agent: Perplexity-User
+Allow: /
 User-agent: Google-Extended
+Allow: /
+User-agent: Applebot-Extended
+Allow: /
+User-agent: meta-externalagent
+Allow: /
+User-agent: FacebookBot
+Allow: /
+User-agent: Amazonbot
+Allow: /
+User-agent: cohere-ai
+Allow: /
+User-agent: CCBot
+Allow: /
+User-agent: YouBot
+Allow: /
+User-agent: Diffbot
 Allow: /
 
 Sitemap: https://hire-verified-talent-1.preview.emergentagent.com/sitemap.xml

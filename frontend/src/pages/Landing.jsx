@@ -9,6 +9,7 @@ import {
 import Logo from "@/components/Logo";
 import { MatchRing, DimBar, Pill, VerifiedBadge, CheckLine } from "@/components/brand";
 import { useAuth, homeForRole } from "@/context/AuthContext";
+import { openCookiePreferences } from "@/components/public/CookieConsent";
 import api from "@/lib/api";
 import Seo, { ORG_JSONLD, WEBSITE_JSONLD, faqJsonLd } from "@/seo/Seo";
 
@@ -412,7 +413,16 @@ export default function Landing() {
               </ul></div>
             </div>
           </div>
-          <p className="text-bodygray text-sm mt-10">© {new Date().getFullYear()} ElevateMe. A talent intelligence marketplace.</p>
+          <div className="flex flex-col md:flex-row justify-between gap-3 mt-10">
+            <p className="text-bodygray text-sm">© {new Date().getFullYear()} ElevateMe. A talent intelligence marketplace.</p>
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+              <Link to="/privacy" className="text-bodygray text-sm hover:text-terracotta transition-colors" data-testid="footer-privacy-link">Privacy</Link>
+              <Link to="/terms" className="text-bodygray text-sm hover:text-terracotta transition-colors" data-testid="footer-terms-link">Terms</Link>
+              <Link to="/cookies" className="text-bodygray text-sm hover:text-terracotta transition-colors" data-testid="footer-cookies-link">Cookies</Link>
+              <Link to="/data-request" className="text-bodygray text-sm hover:text-terracotta transition-colors" data-testid="footer-data-request-link">Data Request</Link>
+              <button type="button" onClick={openCookiePreferences} className="text-bodygray text-sm hover:text-terracotta transition-colors" data-testid="footer-cookie-prefs-btn">Cookie preferences</button>
+            </div>
+          </div>
         </Section>
       </footer>
     </div>

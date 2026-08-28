@@ -211,6 +211,7 @@ class ShortlistInput(BaseModel):
 
 @api.get("/shortlist")
 async def get_shortlist(user: dict = Depends(current_user)):
+    _require_employer(user)
     items = await db.shortlists.find({"user_id": user["id"]}, {"_id": 0}).to_list(200)
     out = []
     for it in items:
@@ -222,6 +223,7 @@ async def get_shortlist(user: dict = Depends(current_user)):
 
 @api.post("/shortlist")
 async def add_shortlist(body: ShortlistInput, user: dict = Depends(current_user)):
+    _require_employer(user)
     existing = await db.shortlists.find_one({"user_id": user["id"], "candidate_slug": body.candidate_slug})
     if existing:
         await db.shortlists.update_one({"_id": existing["_id"]}, {"$set": {"note": body.note, "role_id": body.role_id}})
@@ -241,6 +243,7 @@ async def add_shortlist(body: ShortlistInput, user: dict = Depends(current_user)
 
 @api.delete("/shortlist/{candidate_slug}")
 async def remove_shortlist(candidate_slug: str, user: dict = Depends(current_user)):
+    _require_employer(user)
     await db.shortlists.delete_one({"user_id": user["id"], "candidate_slug": candidate_slug})
     return {"ok": True}
 
@@ -274,6 +277,7 @@ async def _pool_preview(pool: dict):
 
 @api.get("/pools")
 async def list_pools(user: dict = Depends(current_user)):
+    _require_employer(user)
     pools = await db.talent_pools.find({"user_id": user["id"]}, {"_id": 0}).sort("created_at", -1).to_list(200)
     return [await _pool_preview(p) for p in pools]
 
@@ -557,7 +561,16 @@ async def onboard(body: OnboardInput, user: dict = Depends(current_user)):
 
 # ---------- Talent side ----------
 @api.get("/talent/dashboard")
-async def talent_dashboard(slug: str = "priya-shah"):
+async def talent_dashboard(slug: Optional[str] = None, user: dict = Depends(current_user)):
+    # Talent may only view their own control center; admins may inspect any profile.
+    if user["role"] == "talent":
+        slug = user.get("candidate_id")
+        if not slug:
+            raise HTTPException(status_code=404, detail="No talent profile linked to this account")
+    elif user["role"] == "admin":
+        slug = slug or "priya-shah"
+    else:
+        raise HTTPException(status_code=403, detail="Not authorized for this resource")
     cand = await db.candidates.find_one({"slug": slug}, {"_id": 0})
     if not cand:
         raise HTTPException(status_code=404, detail="Talent profile not found")
@@ -945,7 +958,7 @@ app.include_router(auth_router)
 app.include_router(api)
 app.add_middleware(
     CORSMiddleware,
-    allow_credentials=True,
+    allow_credentials=False,
     allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
     allow_methods=["*"],
     allow_headers=["*"],
@@ -956,6 +969,7 @@ app.add_middleware(
 async def startup():
     await seed_admin(db)
     await db.users.create_index("email", unique=True)
+    await db.login_attempts.create_index("identifier")
     # Version-gated reseed: when SEED_VERSION changes, refresh companies + roles so
     # the demo marketplace reflects the latest catalog (idempotent otherwise).
     meta = await db.seed_meta.find_one({"_id": "seed"})

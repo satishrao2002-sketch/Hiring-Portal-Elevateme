@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ChevronRight, ArrowUpRight } from "lucide-react";
 import Logo from "@/components/Logo";
 import { useAuth, homeForRole } from "@/context/AuthContext";
+import { openCookiePreferences } from "@/components/public/CookieConsent";
 
 const NAV = [
   ["Careers", "/careers"], ["Programs", "/programs"], ["Jobs", "/jobs"], ["Skills", "/skills"],
@@ -76,7 +77,14 @@ export default function PublicLayout({ children }) {
           </div>
           <div className="flex flex-col md:flex-row justify-between gap-3 mt-10 pt-6 border-t border-bordergray/50">
             <p className="text-sm text-bodygray">© {new Date().getFullYear()} ElevateMe — Talent Intelligence Marketplace.</p>
-            <Link to="/register" className="label-eyebrow text-terracotta inline-flex items-center gap-1">Build your profile <ArrowUpRight size={13} /></Link>
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+              <Link to="/privacy" className="text-sm text-bodygray hover:text-terracotta transition-colors" data-testid="footer-privacy-link">Privacy</Link>
+              <Link to="/terms" className="text-sm text-bodygray hover:text-terracotta transition-colors" data-testid="footer-terms-link">Terms</Link>
+              <Link to="/cookies" className="text-sm text-bodygray hover:text-terracotta transition-colors" data-testid="footer-cookies-link">Cookies</Link>
+              <Link to="/data-request" className="text-sm text-bodygray hover:text-terracotta transition-colors" data-testid="footer-data-request-link">Data Request</Link>
+              <button type="button" onClick={openCookiePreferences} className="text-sm text-bodygray hover:text-terracotta transition-colors" data-testid="footer-cookie-prefs-btn">Cookie preferences</button>
+              <Link to="/register" className="label-eyebrow text-terracotta inline-flex items-center gap-1">Build your profile <ArrowUpRight size={13} /></Link>
+            </div>
           </div>
         </div>
       </footer>

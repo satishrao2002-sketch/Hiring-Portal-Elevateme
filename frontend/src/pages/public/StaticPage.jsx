@@ -132,24 +132,92 @@ export const CONTENT = {
     ],
     cta: ["Start recruiting smarter", "Get Started", "/register", "How It Works", "/how-it-works"],
   },
+  privacy: {
+    title: "Privacy Policy", crumb: "Privacy", legal: true, updated: "August 2026",
+    seoTitle: "Privacy Policy — ElevateMe",
+    seoDesc: "How ElevateMe collects, uses, protects and shares personal data for candidates, employers and recruiters, and the rights you have over your information.",
+    answer: "This Privacy Policy explains what personal information ElevateMe collects, how we use and protect it, who we share it with, and the choices and rights you have — including how to access, export or delete your data.",
+    sections: [
+      ["Information we collect", "Account details (name, email, role), profile information you provide (skills, education, experience, project evidence, work-authorization status where relevant), and usage data such as pages viewed and features used. Candidates may optionally upload documents such as resumes."],
+      ["How we use your information", "To operate the marketplace: create and match profiles to roles, produce explainable match and readiness insights, enable messaging and interviews, secure the platform, and improve our service. We do not sell your personal data."],
+      ["Legal basis & fairness", "Where required, we rely on your consent and our legitimate interest in operating a hiring marketplace. Matching provides decision-support to humans; it does not make automated final hiring decisions. Work-authorization data is used only in legally appropriate hiring workflows, never as an indiscriminate ranking signal."],
+      ["Sharing", "Candidate profiles are shared with employers and recruiters within the platform when relevant to a role. We use a limited set of processors (hosting, analytics, transactional email) under appropriate agreements. We disclose data if required by law."],
+      ["Data retention & security", "We retain data while your account is active and as needed for legitimate business or legal purposes. We apply access controls, encryption in transit, and least-privilege access. No system is perfectly secure, but we work continuously to protect your data."],
+      ["Your rights", "You may access, correct, export or delete your personal data, and object to or restrict certain processing. Use the in-app Account settings or the Data Request page, or email privacy@elevateme.com. If you are in the EU/UK, GDPR rights apply; if you are in a U.S. state with privacy laws, applicable state rights apply."],
+      ["International users", "We serve the U.S. market; if you access ElevateMe from outside the U.S., your data may be processed in the U.S. We take steps to protect it consistent with this policy."],
+    ],
+    legalNote: "This policy is provided in good faith for transparency and is not legal advice. Before public launch, have it reviewed by qualified counsel for your jurisdictions (including GDPR and applicable U.S. state privacy laws).",
+    contact: "Privacy questions: privacy@elevateme.com",
+  },
+  terms: {
+    title: "Terms of Service", crumb: "Terms", legal: true, updated: "August 2026",
+    seoTitle: "Terms of Service — ElevateMe",
+    seoDesc: "The terms governing your use of ElevateMe, including acceptable use, accounts, content, disclaimers and limitations for candidates, employers and recruiters.",
+    answer: "These Terms of Service govern your access to and use of ElevateMe. By creating an account or using the platform, you agree to these terms.",
+    sections: [
+      ["Your account", "You must provide accurate information, keep your credentials secure, and be responsible for activity under your account. You must be legally able to enter into these terms."],
+      ["Acceptable use", "Do not misuse the platform: no fabrication or misrepresentation of experience, credentials, employment, references or work authorization; no scraping, spamming, discrimination that violates law, or attempts to breach security. Employers and recruiters must use candidate data only for legitimate hiring purposes."],
+      ["Content & ownership", "You retain rights to the content you submit and grant ElevateMe a license to host and display it to operate the service. ElevateMe owns the platform, software and its brand."],
+      ["Matching is decision support", "Match scores, readiness scores and market figures are explainable estimates and illustrative signals — not guarantees of hiring, placement, or outcomes, and not automated final hiring decisions."],
+      ["Disclaimers & liability", "The service is provided \"as is\" without warranties to the extent permitted by law. ElevateMe is not liable for hiring decisions made by employers or for indirect or consequential damages. Nothing here excludes liability that cannot be excluded by law."],
+      ["Termination", "You may close your account at any time. We may suspend or terminate accounts that violate these terms. We may update these terms and will note the effective date."],
+    ],
+    legalNote: "These terms are a starting template for transparency and are not legal advice. Have them reviewed and adapted by qualified counsel before launch.",
+    contact: "Questions about these terms: legal@elevateme.com",
+  },
+  cookies: {
+    title: "Cookie Policy", crumb: "Cookies", legal: true, updated: "August 2026",
+    seoTitle: "Cookie Policy — ElevateMe",
+    seoDesc: "How ElevateMe uses cookies and similar technologies for essential functionality and analytics, and how you can control your preferences.",
+    answer: "This Cookie Policy explains how ElevateMe uses cookies and similar technologies, the categories we use, and how you can manage your choices at any time.",
+    sections: [
+      ["Essential cookies", "Required for the platform to work — for example keeping you signed in and maintaining security. These cannot be turned off."],
+      ["Analytics cookies", "Help us understand how the site is used so we can improve it. These are only set with your consent and can be changed at any time via the cookie banner."],
+      ["Managing your choices", "When you first visit, you can accept or decline non-essential cookies. You can change your decision anytime by reopening the cookie preferences from the banner, or by clearing cookies in your browser."],
+    ],
+    legalNote: "This summary is provided for transparency and is not legal advice. Confirm your final cookie/tracking stack and consent flow with counsel, especially for EU/UK visitors.",
+    contact: "Cookie questions: privacy@elevateme.com",
+  },
+  "data-request": {
+    title: "Data & Deletion Requests", crumb: "Data Request", legal: true, updated: "August 2026",
+    seoTitle: "Data Access & Deletion Requests — ElevateMe",
+    seoDesc: "Request a copy of your ElevateMe data or ask us to delete your account and personal information. Learn what to expect and how long it takes.",
+    answer: "You control your data. You can request a copy of your personal information (data export) or ask us to permanently delete your account and personal data.",
+    sections: [
+      ["Export your data", "Signed-in users can download their profile data from Account settings. You can also email a request and we will provide a copy of your personal data in a standard format."],
+      ["Delete your account & data", "Signed-in users can delete their account from Account settings. Deletion removes your profile and personal data from active systems; some records may be retained only where required by law, then removed."],
+      ["How to request", "Email data@elevateme.com from your account email with the subject \"Data export\" or \"Delete my data\". We aim to respond within 30 days and may verify your identity to protect your account."],
+    ],
+    legalNote: "This describes our intended process for transparency and is not legal advice. Align retention periods and verification with counsel and applicable law.",
+    contact: "Data requests: data@elevateme.com",
+  },
 };
 
 export default function StaticPage({ slug }) {
   const c = CONTENT[slug];
   if (!c) return <PublicLayout><PageWrap><h1 className="font-display text-3xl pt-28">Page not found</h1></PageWrap></PublicLayout>;
   const crumbs = [{ name: "Home", path: "/" }, { name: c.crumb, path: `/${slug}` }];
+  const jsonLd = [breadcrumbJsonLd(crumbs)];
+  if (c.faqs) jsonLd.push(faqJsonLd(c.faqs));
   return (
     <PublicLayout>
-      <Seo title={c.seoTitle} description={c.seoDesc} path={`/${slug}`} jsonLd={[breadcrumbJsonLd(crumbs), faqJsonLd(c.faqs)]} />
+      <Seo title={c.seoTitle} description={c.seoDesc} path={`/${slug}`} jsonLd={jsonLd} />
       <Breadcrumbs items={crumbs} />
       <PageWrap>
-        <h1 className="font-display text-4xl md:text-5xl text-charcoal mb-5 mt-6">{c.title}</h1>
+        <h1 className="font-display text-4xl md:text-5xl text-charcoal mb-2 mt-6" data-testid="static-page-title">{c.title}</h1>
+        {c.updated && <p className="text-sm text-bodygray mb-5">Last updated: {c.updated}</p>}
         <AnswerBlock answer={c.answer} />
         {c.sections.map(([t, body]) => (
           <Section key={t} title={t}><p className="text-bodygray leading-relaxed max-w-3xl">{body}</p></Section>
         ))}
-        <Section title="Frequently asked questions"><FaqList faqs={c.faqs} /></Section>
-        <ProductCta heading={c.cta[0]} primary={c.cta[1]} primaryTo={c.cta[2]} secondary={c.cta[3]} secondaryTo={c.cta[4]} />
+        {c.faqs && <Section title="Frequently asked questions"><FaqList faqs={c.faqs} /></Section>}
+        {c.legalNote && (
+          <div className="max-w-3xl mt-8 rounded-xl border border-bordergray/70 bg-white/60 p-5" data-testid="static-page-note">
+            <p className="text-sm text-bodygray leading-relaxed"><span className="font-bold text-charcoal">Note: </span>{c.legalNote}</p>
+            {c.contact && <p className="text-sm text-charcoal font-bold mt-3">{c.contact}</p>}
+          </div>
+        )}
+        {c.cta && <ProductCta heading={c.cta[0]} primary={c.cta[1]} primaryTo={c.cta[2]} secondary={c.cta[3]} secondaryTo={c.cta[4]} />}
       </PageWrap>
     </PublicLayout>
   );

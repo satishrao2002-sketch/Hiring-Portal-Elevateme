@@ -3,6 +3,7 @@ import { Toaster } from "sonner";
 import { AuthProvider } from "@/context/AuthContext";
 import ProductLayout from "@/components/product/ProductLayout";
 import { SiteVerification } from "@/seo/Seo";
+import CookieConsent from "@/components/public/CookieConsent";
 
 import Landing from "@/pages/Landing";
 import Login from "@/pages/Login";
@@ -72,6 +73,10 @@ function App() {
           <Route path="/for-students" element={<StaticPage slug="for-students" />} />
           <Route path="/for-employers" element={<StaticPage slug="for-employers" />} />
           <Route path="/for-recruiters" element={<StaticPage slug="for-recruiters" />} />
+          <Route path="/privacy" element={<StaticPage slug="privacy" />} />
+          <Route path="/terms" element={<StaticPage slug="terms" />} />
+          <Route path="/cookies" element={<StaticPage slug="cookies" />} />
+          <Route path="/data-request" element={<StaticPage slug="data-request" />} />
 
           <Route path="/employer" element={<ProductLayout roles={EMP}><EmployerDashboard /></ProductLayout>} />
           <Route path="/employer/find-talent" element={<ProductLayout roles={EMP}><FindTalent /></ProductLayout>} />
@@ -95,6 +100,7 @@ function App() {
 
           <Route path="*" element={<NotFound />} />
         </Routes>
+        <CookieConsent />
       </BrowserRouter>
     </AuthProvider>
   );

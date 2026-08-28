@@ -90,11 +90,48 @@ def build_auth_router(db):
         return {"token": token, "user": {"id": uid, "email": email, "name": body.name, "role": role}}
 
     @router.post("/login")
-    async def login(body: LoginInput):
+    async def login(body: LoginInput, request: Request):
         email = body.email.lower()
+        fwd = request.headers.get("x-forwarded-for", "")
+        ip = fwd.split(",")[0].strip() if fwd else (request.client.host if request.client else "unknown")
+        identifier = f"{ip}:{email}"
+        now = datetime.now(timezone.utc)
+        window = timedelta(minutes=15)
+
+        def _parse(dt):
+            return datetime.fromisoformat(dt) if isinstance(dt, str) else dt
+
+        # Brute-force lockout: 5 failed attempts within a 15-min window => 15 min lock.
+        record = await db.login_attempts.find_one({"identifier": identifier})
+        prev_count = 0
+        if record:
+            locked_until = _parse(record.get("locked_until"))
+            if locked_until and locked_until > now:
+                retry = int((locked_until - now).total_seconds() / 60) + 1
+                raise HTTPException(
+                    status_code=429,
+                    detail=f"Too many failed login attempts. Try again in {retry} minute(s).",
+                )
+            # Carry forward the count only if the last attempt is still inside the
+            # window and there is no expired lock; otherwise start fresh.
+            last_attempt = _parse(record.get("last_attempt"))
+            if not locked_until and last_attempt and (now - last_attempt) <= window:
+                prev_count = record.get("count", 0)
+
         user = await db.users.find_one({"email": email})
         if not user or not verify_password(body.password, user["password_hash"]):
+            attempts = prev_count + 1
+            update = {"identifier": identifier, "count": attempts, "last_attempt": now.isoformat()}
+            op = {"$set": update}
+            if attempts >= 5:
+                update["locked_until"] = (now + window).isoformat()
+            else:
+                op["$unset"] = {"locked_until": ""}
+            await db.login_attempts.update_one({"identifier": identifier}, op, upsert=True)
             raise HTTPException(status_code=401, detail="Invalid email or password")
+
+        # success: clear any failed-attempt record
+        await db.login_attempts.delete_one({"identifier": identifier})
         token = create_access_token(user["id"], email, user["role"])
         return {
             "token": token,

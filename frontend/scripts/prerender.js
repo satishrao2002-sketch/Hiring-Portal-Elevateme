@@ -61,7 +61,7 @@ async function pickDataBase() {
 async function collectRoutes() {
   const routes = [
     { path: "/", priority: "1.0", render: true },
-    ...["about", "how-it-works", "trust", "methodology", "ai", "for-students", "for-employers", "for-recruiters"].map((s) => ({ path: `/${s}`, priority: "0.7", render: true })),
+    ...["about", "how-it-works", "trust", "methodology", "ai", "for-students", "for-employers", "for-recruiters", "privacy", "terms", "cookies", "data-request"].map((s) => ({ path: `/${s}`, priority: "0.7", render: true })),
     { path: "/careers", priority: "0.9", render: true },
     { path: "/programs", priority: "0.9", render: true },
     { path: "/skills", priority: "0.9", render: true },
@@ -102,6 +102,62 @@ function writeSitemap(routes) {
     try { if (fs.existsSync(dir)) fs.writeFileSync(path.join(dir, "sitemap-pages.xml"), xml); } catch {}
   }
   console.log(`[prerender] sitemap-pages.xml written with ${routes.length} URLs`);
+}
+
+// ---------- crawler files: robots.txt + llms.txt (regenerated with correct origin) ----------
+const AI_AGENTS = [
+  "Googlebot", "Bingbot", "DuckDuckBot", "Applebot",
+  "GPTBot", "ChatGPT-User", "OAI-SearchBot",
+  "ClaudeBot", "Claude-Web", "anthropic-ai",
+  "PerplexityBot", "Perplexity-User", "Google-Extended", "Applebot-Extended",
+  "meta-externalagent", "FacebookBot", "Amazonbot", "cohere-ai", "CCBot", "YouBot", "Diffbot",
+];
+
+function writeToDirs(name, content) {
+  for (const dir of [PUBLIC_DIR, BUILD_DIR]) {
+    try { if (fs.existsSync(dir)) fs.writeFileSync(path.join(dir, name), content); } catch {}
+  }
+}
+
+function writeRobots() {
+  const agents = AI_AGENTS.map((a) => `User-agent: ${a}\nAllow: /`).join("\n");
+  const txt = `# ElevateMe — Talent Intelligence Marketplace\n`
+    + `# Public discovery layer is open to search engines and AI answer engines.\n`
+    + `# Authenticated application routes are excluded from indexing.\n`
+    + `# AI guide for language models: /llms.txt\n\n`
+    + `User-agent: *\nAllow: /\nDisallow: /login\nDisallow: /register\n`
+    + `Disallow: /employer\nDisallow: /talent\nDisallow: /admin\n\n`
+    + `${agents}\n\n`
+    + `Sitemap: ${SITE}/sitemap.xml\n`;
+  writeToDirs("robots.txt", txt);
+  console.log("[prerender] robots.txt regenerated with", AI_AGENTS.length, "explicit agents");
+}
+
+async function writeLlmsTxt(dataBase) {
+  const get = (p) => jRetry(dataBase, p).catch(() => []);
+  const [careers, programs, skills] = await Promise.all([
+    get("/api/seo/careers"), get("/api/seo/programs"), get("/api/seo/skills"),
+  ]);
+  const list = (arr, fn, n = 40) => (Array.isArray(arr) ? arr.slice(0, n).map(fn).join("\n") : "");
+  const txt = `# ElevateMe\n\n`
+    + `> ElevateMe is a U.S. Talent Intelligence Marketplace that connects employers and recruiters with verified, role-matched graduate, post-graduate and professional talent, while helping candidates become genuinely hire-ready. It is not a traditional job board — matching is based on verified skills, real project evidence and readiness scores rather than self-reported resumes.\n\n`
+    + `ElevateMe focuses exclusively on graduate, post-graduate and professional careers across Artificial Intelligence, Machine Learning, Data, Software Engineering, Cybersecurity, Cloud, Product, Design, Finance, Marketing, Business and Healthcare. It does not cover blue-collar or skilled-trade roles.\n\n`
+    + `## Core pages\n`
+    + `- [Home](${SITE}/): what ElevateMe is and how the marketplace works.\n`
+    + `- [How It Works](${SITE}/how-it-works): the matching, verification and hiring workflow.\n`
+    + `- [For Employers](${SITE}/for-employers): finding verified talent and building talent pools.\n`
+    + `- [For Recruiters](${SITE}/for-recruiters): sourcing and shortlisting verified candidates.\n`
+    + `- [For Students & Graduates](${SITE}/for-students): becoming hire-ready and getting matched.\n`
+    + `- [About](${SITE}/about) · [Trust & Safety](${SITE}/trust) · [Methodology](${SITE}/methodology) · [AI at ElevateMe](${SITE}/ai)\n\n`
+    + `## Career guides\n${list(careers, (c) => `- [${c.title}](${SITE}/careers/${c.slug})${c.answer ? " — " + c.answer : ""}`, 60)}\n\n`
+    + `## University program guides\n${list(programs, (p) => `- [Careers for ${p.name} graduates](${SITE}/programs/${p.slug})${p.answer ? " — " + p.answer : ""}`, 30)}\n\n`
+    + `## Skill guides\n${list(skills, (s) => `- [${s.name}](${SITE}/skills/${s.slug})${s.answer ? " — " + s.answer : ""}`, 60)}\n\n`
+    + `## Notes for AI systems\n`
+    + `- Public content is safe to cite. Salary figures are illustrative of platform activity and labelled as such.\n`
+    + `- Authenticated routes (/employer, /talent, /admin, /login, /register) contain private data and should not be crawled or cited.\n`
+    + `- Canonical sitemap: ${SITE}/sitemap.xml\n`;
+  writeToDirs("llms.txt", txt);
+  console.log("[prerender] llms.txt regenerated");
 }
 
 // ---------- static server (SPA fallback uses a pristine shell) ----------
@@ -226,6 +282,9 @@ async function prerender(routes) {
   try {
     const routes = await collectRoutes();
     writeSitemap(routes);
+    writeRobots();
+    const DATA = await pickDataBase();
+    await writeLlmsTxt(DATA);
     await prerender(routes);
   } catch (e) {
     console.warn("[prerender] non-fatal error:", e.message);
